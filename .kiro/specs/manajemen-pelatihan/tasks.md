@@ -1,6 +1,6 @@
 # Implementation Tasks — Aplikasi Manajemen Pelatihan Android
 
-Dokumen ini mengacu pada #[[file:requirements.md]]. Kerjakan task secara berurutan karena beberapa task bergantung pada model dan infrastruktur dari task sebelumnya.
+Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerjakan task secara berurutan karena beberapa task bergantung pada model dan infrastruktur dari task sebelumnya.
 
 - [ ] 1. Inisialisasi proyek Android
   - Buat proyek Kotlin Android dengan Jetpack Compose dan struktur package yang konsisten.
@@ -12,7 +12,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]]. Kerjakan task secara berurut
 
 - [ ] 2. Konfigurasikan Firebase dan struktur data cloud
   - Hubungkan aplikasi Android dengan Firebase Authentication, Cloud Firestore, dan Firebase Storage.
-  - Definisikan collection untuk `users`, `trainings`, `participants`, `registrations`, `whatsappOpenLogs`, dan `auditLogs`, serta dokumen tunggal `appSettings/general`.
+  - Definisikan collection untuk `users`, `trainings`, `participants`, `participantPhoneIndex`, `registrations`, `whatsappOpenLogs`, dan `auditLogs`, serta dokumen tunggal `appSettings/general`.
   - Siapkan lokasi Firebase Storage khusus logo komunitas.
   - Gunakan server timestamp untuk waktu audit dan perubahan data.
   - Siapkan converter/mapping antara dokumen Firestore dan model aplikasi.

@@ -7,6 +7,7 @@ Dokumen ini menjelaskan konfigurasi eksternal yang diperlukan oleh aplikasi E-Pe
 - Application ID: `com.harunmaul.epelatihan`
 - Minimum SDK: 26
 - Target SDK: 36
+- Paket Firebase: Spark
 
 Build debug dan release memakai Application ID yang sama agar satu `google-services.json` dapat digunakan pada tahap awal. Build tetap dapat dibedakan melalui `BuildConfig.ENVIRONMENT` dan suffix versi debug.
 
@@ -19,7 +20,6 @@ Build debug dan release memakai Application ID yang sama agar satu `google-servi
 5. Jangan commit file tersebut. Pola `**/google-services.json` sudah masuk `.gitignore`.
 6. Aktifkan Authentication dengan provider Email/Password.
 7. Buat Cloud Firestore database pada region yang dipilih lembaga.
-8. Aktifkan Firebase Storage pada region yang sesuai.
 
 Setelah file tersedia, sinkronkan Gradle dan jalankan:
 
@@ -44,15 +44,15 @@ auditLogs/{eventId}
 
 Konstanta path berada di `data/firebase/FirestoreSchema.kt`. Model wire Firestore berada di `data/firebase/model/FirestoreDocuments.kt` dan mapper domain berada di `data/mapper/FirestoreMappers.kt`.
 
-## Firebase Storage
+## Logo lokal
 
-Logo komunitas disimpan di:
+Project tetap menggunakan paket Firebase Spark dan tidak memakai Firebase Storage. Logo berasal dari `logo.png` yang dioptimasi menjadi 640×640 piksel, lalu dibundel di:
 
 ```text
-branding/logo/{nama-file-unik}
+app/src/main/res/drawable-nodpi/logo_epelatihan.png
 ```
 
-Tidak ada PDF, rekaman, atau bukti pembayaran yang diunggah aplikasi. Fitur tersebut hanya menyimpan URL eksternal.
+Menu Pengaturan hanya menyimpan nama komunitas di Firestore. Aplikasi tidak mengunggah logo, PDF, rekaman, atau bukti pembayaran; fitur materi hanya menyimpan URL eksternal.
 
 ## Timestamp server
 
@@ -67,16 +67,16 @@ Field audit seperti `createdAt`, `updatedAt`, dan `openedAt` menggunakan server 
 - Token Firebase CLI
 - File `secrets.properties` dan `keystore.properties`
 
-Credential Cloud Functions nantinya disimpan melalui Secret Manager atau environment deployment, bukan dalam source code.
+Credential backend nantinya disimpan melalui Secret Manager atau environment deployment, bukan dalam source code. Cloud Functions tidak dapat dideploy selama project tetap pada paket Spark; keputusan mekanisme undangan pengguna harus dibuat sebelum Task 5.
 
 ## Verifikasi koneksi Task 2
 
 Task 2 dapat dinyatakan selesai setelah seluruh pemeriksaan berikut berhasil:
 
 1. Build dengan `google-services.json` berhasil.
-2. `FirebaseApp` berhasil diinisialisasi pada perangkat/emulator.
-3. Instance Firebase Auth, Firestore, dan Storage dapat dibuat.
-4. Project ID yang terbaca aplikasi sama dengan Firebase project milik lembaga.
+2. Task `processDebugGoogleServices` menghasilkan resource Firebase dan `BuildConfig.FIREBASE_CONFIGURED == true`.
+3. Provider Email/Password merespons dan database Firestore `(default)` tersedia.
+4. Project ID yang dihasilkan plugin sama dengan Firebase project milik lembaga.
 5. Tidak ada file konfigurasi atau secret yang masuk Git.
 
 Security Rules, indexes produksi, dan Cloud Functions diterapkan pada task berikutnya sesuai `tasks.md`.

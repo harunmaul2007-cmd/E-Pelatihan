@@ -10,7 +10,8 @@ Membangun aplikasi Android untuk satu lembaga yang mengelola pelatihan, peserta,
 - Aplikasi digunakan oleh satu lembaga.
 - Data terstruktur disimpan di Cloud Firestore, bukan di file Google Drive.
 - Google Drive atau layanan lain dapat menjadi asal link Zoom, rekaman, dan PDF, tetapi aplikasi hanya menyimpan URL.
-- Logo komunitas merupakan satu-satunya berkas yang diunggah oleh aplikasi dan disimpan di Firebase Storage.
+- Logo E-Pelatihan berasal dari file lokal `logo.png`, dikompres, dan dibundel sebagai resource aplikasi; logo tidak dapat diunggah atau diubah dari aplikasi.
+- Firebase menggunakan paket Spark dan aplikasi tidak bergantung pada Firebase Storage.
 - Autentikasi menggunakan email dan password.
 - Pengguna tidak mendaftar sendiri; Admin mengundang pengguna.
 - Setiap pelatihan mempunyai satu jadwal dan satu metode pertemuan.
@@ -48,7 +49,7 @@ Membangun aplikasi Android untuk satu lembaga yang mengelola pelatihan, peserta,
 | Mengubah status pembayaran | Ya | Tidak |
 | Membuka WhatsApp dengan pesan siap kirim | Ya | Ya |
 | Melihat dan mengekspor laporan | Ya | Ya |
-| Mengubah nama komunitas dan logo login | Ya | Tidak |
+| Mengubah nama komunitas | Ya | Tidak |
 | Mengundang dan mengelola pengguna aplikasi | Ya | Tidak |
 
 Pembatasan harus diterapkan pada Firestore Security Rules dan backend, bukan hanya dengan menyembunyikan tombol di antarmuka.
@@ -226,12 +227,11 @@ Pembatasan harus diterapkan pada Firestore Security Rules dan backend, bukan han
 #### Kriteria penerimaan
 
 1. Pelatihan, peserta, pendaftaran, profil pengguna, pengaturan aplikasi, dan audit log disimpan di Cloud Firestore.
-2. Logo komunitas disimpan di Firebase Storage.
-3. Perubahan yang berhasil disimpan terlihat pada perangkat pengguna lain.
-4. Aplikasi menampilkan status loading, kosong, gagal, dan tidak ada koneksi secara jelas.
-5. Penulisan data yang gagal tidak boleh ditampilkan sebagai sukses.
-6. Semua data operasional berada dalam ruang data satu lembaga.
-7. Link eksternal disimpan sebagai URL; aplikasi tidak mengunggah PDF, rekaman, atau bukti pembayaran.
+2. Perubahan yang berhasil disimpan terlihat pada perangkat pengguna lain.
+3. Aplikasi menampilkan status loading, kosong, gagal, dan tidak ada koneksi secara jelas.
+4. Penulisan data yang gagal tidak boleh ditampilkan sebagai sukses.
+5. Semua data operasional berada dalam ruang data satu lembaga.
+6. Link eksternal disimpan sebagai URL; aplikasi tidak mengunggah logo, PDF, rekaman, atau bukti pembayaran.
 
 ### REQ-12 — Keamanan dan audit
 
@@ -248,31 +248,27 @@ Pembatasan harus diterapkan pada Firestore Security Rules dan backend, bukan han
 
 ### REQ-13 — Pengaturan identitas komunitas
 
-**User story:** Sebagai Admin, saya ingin mengatur nama dan logo komunitas agar layar login menampilkan identitas penyedia pelatihan.
+**User story:** Sebagai Admin, saya ingin mengatur nama komunitas agar layar login menampilkan identitas penyedia pelatihan bersama logo aplikasi.
 
 #### Kriteria penerimaan
 
 1. Aplikasi menyediakan menu Pengaturan yang hanya dapat diakses Admin.
-2. Admin dapat mengisi dan mengubah nama komunitas penyedia pelatihan.
+2. Menu Pengaturan hanya menyediakan input nama komunitas penyedia pelatihan.
 3. Nama komunitas wajib diisi, mengabaikan spasi di awal/akhir, dan dibatasi maksimal 100 karakter.
-4. Admin dapat memilih dan mengunggah logo dari penyimpanan atau galeri Android.
-5. Logo yang diterima berformat PNG, JPEG, atau WebP dengan ukuran maksimal 2 MB.
-6. Aplikasi menampilkan pratinjau logo sebelum Admin menyimpan perubahan.
-7. Nama komunitas dan referensi logo disimpan dalam satu dokumen pengaturan aplikasi di Cloud Firestore; berkas logo disimpan di Firebase Storage.
-8. Nama komunitas dan logo tampil pada layar login di semua perangkat setelah pengaturan tersinkron.
-9. Layar login tetap dapat membaca identitas komunitas sebelum pengguna terautentikasi. Dokumen pengaturan publik hanya boleh memuat nama dan referensi logo tanpa data sensitif, dan akses baca publik pada Firebase Storage dibatasi ke folder branding/logo.
-10. Hanya Admin yang dapat mengubah pengaturan dan mengunggah atau mengganti logo.
-11. Saat logo diganti, aplikasi menghapus logo lama setelah referensi logo baru berhasil disimpan agar layar login tidak kehilangan logo jika proses gagal.
-12. Jika identitas belum dikonfigurasi atau gagal dimuat, layar login menampilkan nama aplikasi dan logo bawaan.
-13. Perubahan nama komunitas dan logo dicatat dalam audit log.
+4. Nama komunitas disimpan pada dokumen `appSettings/general` di Cloud Firestore.
+5. Nama komunitas tampil pada layar login di semua perangkat setelah tersinkron.
+6. Logo pada layar login selalu menggunakan resource lokal hasil optimasi dari `logo.png`.
+7. Aplikasi tidak menyediakan pilihan, upload, perubahan, atau penghapusan logo.
+8. Dokumen pengaturan dapat dibaca sebelum autentikasi dan hanya memuat nama komunitas serta metadata perubahan tanpa data sensitif.
+9. Hanya Admin yang dapat mengubah nama komunitas.
+10. Jika nama komunitas belum dikonfigurasi atau gagal dimuat, layar login menampilkan nama aplikasi `E-Pelatihan`.
+11. Perubahan nama komunitas dicatat dalam audit log.
 
 ## 6. Model data konseptual
 
 ### AppSettings
 
 - `communityName`
-- `logoUrl`
-- `logoStoragePath`
 - `updatedBy`
 - `updatedAt`
 
@@ -383,5 +379,5 @@ Perhitungan menggunakan `priceAmount` pada pendaftaran, bukan harga terbaru pada
 - DP, cicilan, refund, atau bukti pembayaran.
 - Diskon selain harga early bird.
 - Batas waktu atau kuota otomatis early bird.
-- Upload file selain logo komunitas, termasuk PDF, rekaman, dan bukti pembayaran.
+- Upload file melalui aplikasi, termasuk logo, PDF, rekaman, dan bukti pembayaran.
 - Presensi, sertifikat, ujian, dan penilaian peserta.

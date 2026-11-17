@@ -18,13 +18,6 @@ object FirestoreDocuments {
     const val GENERAL_SETTINGS = "general"
 }
 
-object FirebaseStoragePaths {
-    const val BRANDING_LOGO_DIRECTORY = "branding/logo"
-
-    fun communityLogo(fileName: String): String =
-        "$BRANDING_LOGO_DIRECTORY/$fileName"
-}
-
 fun FirebaseFirestore.appSettingsDocument(): DocumentReference =
     collection(FirestoreCollections.APP_SETTINGS)
         .document(FirestoreDocuments.GENERAL_SETTINGS)

@@ -28,8 +28,6 @@ import java.util.Date
 
 fun AppSettingsDocument.toDomain(): AppSettings = AppSettings(
     communityName = communityName,
-    logoUrl = logoUrl,
-    logoStoragePath = logoStoragePath,
     schemaVersion = schemaVersion,
     updatedBy = updatedBy,
     updatedAt = updatedAt.toInstantOrNull(),
@@ -37,8 +35,6 @@ fun AppSettingsDocument.toDomain(): AppSettings = AppSettings(
 
 fun AppSettings.toDocument(): AppSettingsDocument = AppSettingsDocument(
     communityName = communityName,
-    logoUrl = logoUrl,
-    logoStoragePath = logoStoragePath,
     schemaVersion = schemaVersion,
     updatedBy = updatedBy,
     updatedAt = updatedAt.toTimestampOrNull(),

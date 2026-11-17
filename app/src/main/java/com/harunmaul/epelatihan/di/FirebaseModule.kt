@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.harunmaul.epelatihan.BuildConfig
 import dagger.Module
 import dagger.Provides
@@ -40,9 +39,4 @@ object FirebaseModule {
     @Singleton
     fun provideFirestore(firebaseApp: FirebaseApp): FirebaseFirestore =
         FirebaseFirestore.getInstance(firebaseApp)
-
-    @Provides
-    @Singleton
-    fun provideFirebaseStorage(firebaseApp: FirebaseApp): FirebaseStorage =
-        FirebaseStorage.getInstance(firebaseApp)
 }

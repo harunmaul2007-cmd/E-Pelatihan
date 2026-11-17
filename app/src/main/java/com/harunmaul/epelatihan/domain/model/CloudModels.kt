@@ -12,8 +12,6 @@ enum class TrainingLifecycle { ACTIVE, ARCHIVED }
 
 data class AppSettings(
     val communityName: String,
-    val logoUrl: String?,
-    val logoStoragePath: String?,
     val schemaVersion: Int,
     val updatedBy: String?,
     val updatedAt: Instant?,

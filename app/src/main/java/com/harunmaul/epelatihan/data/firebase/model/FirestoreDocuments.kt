@@ -6,8 +6,6 @@ import com.google.firebase.firestore.ServerTimestamp
 
 data class AppSettingsDocument(
     var communityName: String = "",
-    var logoUrl: String? = null,
-    var logoStoragePath: String? = null,
     var schemaVersion: Int = 1,
     var updatedBy: String? = null,
     @get:ServerTimestamp

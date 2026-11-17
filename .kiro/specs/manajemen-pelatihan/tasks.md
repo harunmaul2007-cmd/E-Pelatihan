@@ -10,10 +10,9 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Pastikan aplikasi dapat dikompilasi dan menampilkan layar awal.
   - **Mencakup:** REQ-01 sampai REQ-13 sebagai fondasi.
 
-- [ ] 2. Konfigurasikan Firebase dan struktur data cloud
-  - Hubungkan aplikasi Android dengan Firebase Authentication, Cloud Firestore, dan Firebase Storage.
+- [x] 2. Konfigurasikan Firebase dan struktur data cloud
+  - Hubungkan aplikasi Android dengan Firebase Authentication dan Cloud Firestore.
   - Definisikan collection untuk `users`, `trainings`, `participants`, `participantPhoneIndex`, `registrations`, `whatsappOpenLogs`, dan `auditLogs`, serta dokumen tunggal `appSettings/general`.
-  - Siapkan lokasi Firebase Storage khusus logo komunitas.
   - Gunakan server timestamp untuk waktu audit dan perubahan data.
   - Siapkan converter/mapping antara dokumen Firestore dan model aplikasi.
   - Dokumentasikan konfigurasi Firebase yang harus disediakan di luar repositori.
@@ -29,7 +28,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
 
 - [ ] 4. Implementasikan login, sesi, dan pemulihan password
   - Buat layar login email/password.
-  - Muat nama dan logo komunitas pada layar login dengan fallback identitas bawaan.
+  - Muat nama komunitas dari Firestore dan logo lokal pada layar login dengan fallback nama aplikasi.
   - Hubungkan login dan logout ke Firebase Authentication.
   - Muat profil, role, dan status aktif setelah autentikasi.
   - Tolak akses untuk akun tanpa profil aktif.
@@ -38,7 +37,8 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - **Mencakup:** REQ-01, REQ-13.
 
 - [ ] 5. Implementasikan bootstrap Admin dan undangan pengguna
-  - Buat Cloud Function/backend untuk operasi Firebase Admin SDK.
+  - Tentukan mekanisme undangan yang kompatibel dengan keputusan tetap memakai Spark; Cloud Functions tidak dapat dideploy pada paket ini.
+  - Jika tersedia backend berizin, implementasikan operasi Firebase Admin SDK di backend tersebut; jika tidak, gunakan proses pembuatan akun manual melalui Firebase Console.
   - Sediakan mekanisme terbatas untuk membuat Admin pertama.
   - Buat menu Admin untuk daftar, undangan, perubahan role, aktivasi, dan penonaktifan pengguna.
   - Kirim tautan penetapan password tanpa memperlihatkan password kepada Admin.
@@ -52,9 +52,8 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Izinkan perubahan atau pengarsipan pelatihan, peserta, dan pendaftaran hanya untuk Admin.
   - Izinkan perubahan status pembayaran dan jenis harga tersimpan hanya untuk Admin.
   - Batasi pengelolaan pengguna dan audit sensitif hanya untuk Admin/backend.
-  - Izinkan pembacaan publik hanya pada nama komunitas, referensi logo, dan berkas dalam folder branding/logo yang dibutuhkan layar login.
-  - Tolak listing Storage publik dan batasi perubahan dokumen pengaturan serta penulisan/penghapusan logo hanya untuk Admin aktif.
-  - Batasi tipe serta ukuran berkas logo melalui validasi aplikasi dan Firebase Storage Rules.
+  - Izinkan pembacaan publik hanya pada nama komunitas dan metadata non-sensitif yang dibutuhkan layar login.
+  - Batasi perubahan dokumen pengaturan hanya untuk Admin aktif.
   - Pastikan field yang dilindungi tidak dapat diubah melalui update parsial oleh User.
   - **Mencakup:** REQ-02, REQ-03, REQ-05, REQ-06, REQ-07, REQ-12, REQ-13.
 
@@ -132,16 +131,14 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Tangani pembatalan pemilih file serta kegagalan penulisan.
   - **Mencakup:** REQ-10.
 
-- [ ] 15. Implementasikan menu Pengaturan dan branding komunitas
+- [ ] 15. Implementasikan menu Pengaturan dan identitas komunitas
   - Buat menu Pengaturan yang hanya terlihat dan dapat dibuka oleh Admin.
   - Buat formulir nama komunitas dengan validasi wajib dan maksimal 100 karakter.
-  - Integrasikan pemilih gambar Android untuk logo PNG, JPEG, atau WebP maksimal 2 MB.
-  - Tampilkan pratinjau logo dan status upload sebelum perubahan disimpan.
-  - Upload logo baru ke Firebase Storage menggunakan nama/path unik.
-  - Simpan nama komunitas, URL logo, dan storage path pada dokumen `appSettings/general`.
-  - Hapus logo lama hanya setelah dokumen berhasil menunjuk logo baru.
-  - Tampilkan nama dan logo pada layar login dengan fallback dan cache yang aman saat jaringan gagal.
-  - Catat perubahan pengaturan dalam audit log.
+  - Simpan nama komunitas dan metadata perubahan pada dokumen `appSettings/general`.
+  - Tampilkan nama komunitas dari Firestore dan logo lokal pada layar login.
+  - Gunakan nama `E-Pelatihan` sebagai fallback jika pengaturan belum tersedia.
+  - Jangan menyediakan pemilih, upload, perubahan, atau penghapusan logo.
+  - Catat perubahan nama komunitas dalam audit log.
   - **Mencakup:** REQ-11, REQ-12, REQ-13.
 
 - [ ] 16. Lengkapi sinkronisasi, state aplikasi, dan audit
@@ -155,8 +152,8 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
 - [ ] 17. Verifikasi penerimaan dan siapkan build aplikasi
   - Periksa setiap kriteria REQ-01 sampai REQ-13 pada akun Admin dan User.
   - Verifikasi User tidak dapat melakukan operasi Admin melalui UI maupun request langsung.
-  - Verifikasi nama dan logo komunitas tampil pada layar login sebelum autentikasi dan tersinkron di perangkat lain.
-  - Verifikasi hanya Admin yang dapat mengubah pengaturan atau mengunggah logo.
+  - Verifikasi nama komunitas dan logo lokal tampil pada layar login sebelum autentikasi.
+  - Verifikasi hanya Admin yang dapat mengubah nama komunitas dan tidak tersedia fitur perubahan logo.
   - Verifikasi data yang dibuat dari satu HP muncul pada HP lain dengan akun berbeda.
   - Verifikasi harga tersimpan tidak berubah ketika master harga diperbarui.
   - Verifikasi hanya peserta lunas yang dapat membuka pesan WhatsApp.

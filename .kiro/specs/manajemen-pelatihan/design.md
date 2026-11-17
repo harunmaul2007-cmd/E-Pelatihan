@@ -4,7 +4,7 @@ Dokumen ini menerjemahkan #[[file:requirements.md]] menjadi rancangan teknis yan
 
 ## 1. Ringkasan
 
-E-Pelatihan adalah aplikasi Android untuk satu lembaga. Aplikasi menyimpan data operasional di Cloud Firestore, menggunakan Firebase Authentication untuk login, Firebase Storage untuk logo komunitas, serta Cloud Functions untuk operasi akun yang membutuhkan hak server. Aplikasi membuka WhatsApp dengan pesan yang telah disusun, tetapi tidak mengirim pesan secara otomatis.
+E-Pelatihan adalah aplikasi Android untuk satu lembaga. Aplikasi menyimpan data operasional di Cloud Firestore, menggunakan Firebase Authentication untuk login, memakai logo lokal yang dibundel dalam aplikasi, serta menggunakan Cloud Functions untuk operasi akun yang membutuhkan hak server. Aplikasi membuka WhatsApp dengan pesan yang telah disusun, tetapi tidak mengirim pesan secara otomatis.
 
 Aplikasi menggunakan satu Android app module agar implementasi awal tetap sederhana. Pemisahan tanggung jawab dilakukan melalui package berdasarkan fitur dan lapisan, bukan melalui banyak Gradle module.
 
@@ -25,7 +25,7 @@ Application ID harus dikonfirmasi sebelum aplikasi didaftarkan ke Firebase karen
 
 ## 3. Sasaran desain
 
-- Menjaga aturan role pada UI, Firestore Security Rules, Storage Rules, dan backend.
+- Menjaga aturan role pada UI, Firestore Security Rules, dan backend.
 - Menyimpan salinan harga pada pendaftaran agar laporan historis tidak berubah.
 - Memungkinkan sinkronisasi data antar-HP dengan status offline/pending yang jelas.
 - Menjaga layar login tetap dapat memuat branding sebelum autentikasi.
@@ -40,7 +40,6 @@ flowchart LR
     User[Admin atau User] --> App[Aplikasi Android]
     App --> Auth[Firebase Authentication]
     App --> Firestore[Cloud Firestore]
-    App --> Storage[Firebase Storage]
     App --> Functions[Cloud Functions]
     App --> Contacts[Android Contact Picker]
     App --> WhatsApp[WhatsApp / wa.me Intent]
@@ -58,8 +57,8 @@ flowchart LR
 |---|---|
 | Android app | UI, validasi awal, akses data, kontak, WhatsApp, laporan, ekspor |
 | Firebase Authentication | Login email/password, sesi, reset password |
-| Cloud Firestore | Pengguna, pelatihan, peserta, pendaftaran, branding, log |
-| Firebase Storage | Berkas logo komunitas |
+| Cloud Firestore | Pengguna, pelatihan, peserta, pendaftaran, nama komunitas, log |
+| Resource Android | Logo E-Pelatihan lokal untuk layar login dan identitas aplikasi |
 | Cloud Functions | Undangan pengguna, custom claims, bootstrap Admin, audit server |
 | Email provider | Mengirim tautan penetapan password |
 | Contact Picker | Memberikan satu kontak yang dipilih pengguna |
@@ -77,7 +76,7 @@ flowchart LR
 - Coroutines untuk operasi asinkron.
 - Hilt untuk dependency injection.
 - Firebase Android SDK melalui Firebase BoM.
-- Coil untuk pemuatan dan cache logo.
+- Resource drawable lokal untuk logo aplikasi.
 - `java.time` untuk tanggal, jam, dan zona waktu karena minimum API 26.
 - `PdfDocument` Android untuk ekspor PDF.
 - Open XML minimal menggunakan `ZipOutputStream` untuk ekspor XLSX agar tidak menambah library spreadsheet besar.
@@ -87,7 +86,9 @@ flowchart LR
 - Firebase Cloud Functions dengan TypeScript.
 - Firebase Admin SDK.
 - Secret Manager/environment configuration untuk credential provider email.
-- Firestore dan Storage Rules disimpan serta ditinjau bersama source code.
+- Firestore Rules disimpan serta ditinjau bersama source code.
+
+> **Batas paket Spark:** deployment Cloud Functions membutuhkan paket Blaze. Karena project diputuskan tetap memakai Spark, rancangan undangan pengguna pada Task 5 belum dapat memakai Cloud Functions. Sebelum Task 5 dimulai, perlu dipilih antara pembuatan akun manual melalui Firebase Console atau backend eksternal yang dikelola terpisah. Keputusan ini tidak menghalangi Task 2–4.
 
 ### Pola arsitektur
 
@@ -144,7 +145,6 @@ E-Pelatihan/
 │   └── package.json
 ├── firestore.rules
 ├── firestore.indexes.json
-├── storage.rules
 ├── firebase.json
 └── .kiro/specs/manajemen-pelatihan/
     ├── requirements.md
@@ -163,7 +163,7 @@ Splash/Bootstrap
 └── Main (jika sesi dan profil valid)
 ```
 
-`Splash/Bootstrap` memuat `appSettings/general`, memeriksa sesi Firebase, lalu memuat profil pengguna. Branding tidak bergantung pada status login.
+`Splash/Bootstrap` memuat nama komunitas dari `appSettings/general`, memakai logo lokal, memeriksa sesi Firebase, lalu memuat profil pengguna. Logo tidak bergantung pada jaringan atau status login.
 
 ### 7.2 Navigasi utama
 
@@ -198,7 +198,7 @@ Menu **Lainnya** berisi:
 | Ubah pembayaran | Ya | Tidak | Konfirmasi sebelum simpan |
 | Laporan | Ya | Ya | Bulan/tahun, ringkasan, rincian |
 | Kelola pengguna | Ya | Tidak | Undang, role, status aktif |
-| Pengaturan | Ya | Tidak | Nama komunitas dan logo |
+| Pengaturan | Ya | Tidak | Nama komunitas saja; logo merupakan resource lokal |
 
 ### 7.4 Prinsip UI
 
@@ -255,15 +255,13 @@ Dokumen ini dapat dibaca tanpa login dan tidak boleh berisi data sensitif.
 ```json
 {
   "communityName": "Komunitas Pelatihan Indonesia",
-  "logoUrl": "https://...",
-  "logoStoragePath": "branding/logo/uuid.webp",
   "schemaVersion": 1,
   "updatedBy": "uid-admin",
   "updatedAt": "server timestamp"
 }
 ```
 
-Hanya Admin dapat menulis. Jika dokumen belum ada, aplikasi menggunakan nama `E-Pelatihan` dan logo bawaan lokal.
+Hanya Admin dapat menulis. Jika dokumen belum ada, aplikasi menggunakan nama `E-Pelatihan`. Logo selalu diambil dari resource lokal `logo_epelatihan.png`.
 
 ### 9.2 `users/{uid}`
 
@@ -487,7 +485,7 @@ sequenceDiagram
     participant Auth as Firebase Auth
 
     A->>F: Baca appSettings/general (publik)
-    F-->>A: Nama dan URL logo / fallback
+    F-->>A: Nama komunitas / fallback; logo dari resource lokal
     A->>Auth: Periksa sesi
     alt Tidak login
         A-->>A: Tampilkan Login
@@ -546,19 +544,16 @@ sequenceDiagram
 5. Audit trigger mencatat before/after.
 6. UI menampilkan hasil setelah server mengonfirmasi atau status pending jika offline.
 
-### 12.5 Penggantian logo
+### 12.5 Perubahan nama komunitas
 
-1. Admin memilih gambar melalui system picker.
-2. Aplikasi memeriksa MIME type dan ukuran maksimal 2 MB.
-3. Aplikasi menampilkan pratinjau.
-4. Aplikasi mengunggah ke path unik `branding/logo/{uuid}.{ext}`.
-5. Aplikasi menjalankan transaction pada `appSettings/general` untuk mengganti referensi.
-6. Jika transaction gagal, aplikasi menghapus upload baru dan mempertahankan referensi lama.
-7. Jika transaction berhasil, aplikasi mencoba menghapus logo lama.
-8. Kegagalan menghapus logo lama dicatat untuk cleanup, tetapi tidak membatalkan branding baru.
-9. Audit trigger mencatat perubahan settings.
-
-Transaction menggunakan `updatedAt`/versi yang terakhir dibaca untuk mendeteksi dua Admin yang mengubah branding bersamaan.
+1. Admin membuka menu Pengaturan.
+2. Aplikasi memuat `appSettings/general` atau fallback `E-Pelatihan`.
+3. Admin mengisi nama maksimal 100 karakter.
+4. Aplikasi memangkas spasi awal/akhir dan memvalidasi nama tidak kosong.
+5. Aplikasi memperbarui `communityName`, `updatedBy`, dan `updatedAt` dengan server timestamp.
+6. Firestore Rules memastikan pemanggil adalah Admin aktif.
+7. Audit trigger mencatat perubahan nama komunitas.
+8. Logo tidak menjadi bagian form karena selalu berasal dari resource lokal aplikasi.
 
 ### 12.6 WhatsApp manual
 
@@ -623,7 +618,7 @@ sisaBelumDibayar = totalTagihan - totalPemasukan
 ### PDF
 
 - Gunakan `PdfDocument`.
-- Header memuat nama komunitas, logo jika tersedia, bulan laporan, dan waktu pembuatan.
+- Header memuat nama komunitas, logo lokal, bulan laporan, dan waktu pembuatan.
 - Ringkasan berada di halaman pertama.
 - Rincian per pelatihan dapat berlanjut ke beberapa halaman.
 - Footer memuat nomor halaman.
@@ -643,7 +638,7 @@ File disimpan menggunakan `ACTION_CREATE_DOCUMENT`. URI hasil picker ditulis mel
 
 ### Sumber role
 
-- Custom claims menyimpan `role` dan status akses untuk pemeriksaan Rules/Storage.
+- Custom claims menyimpan `role` dan status akses untuk pemeriksaan Rules.
 - `users/{uid}` menyimpan profil yang ditampilkan UI dan status aktif terkini.
 - Backend menjaga claims dan dokumen profil tetap konsisten.
 - Saat role/status berubah, backend memperbarui claims dan mencabut refresh token bila diperlukan.
@@ -665,15 +660,6 @@ File disimpan menggunakan `ACTION_CREATE_DOCUMENT`. URI hasil picker ditulis mel
 | `registrations` update | Tidak | Tidak | Ya |
 | `whatsappOpenLogs` create | Tidak | Ya, actor sendiri | Ya |
 | `auditLogs` | Tidak | Tidak | Read Admin, write backend |
-
-### Storage Rules
-
-- Public hanya dapat `get` logo pada `branding/logo/**` agar login dapat menampilkannya.
-- Public tidak dapat melakukan listing.
-- Hanya Admin aktif yang dapat upload/delete.
-- Upload wajib `image/png`, `image/jpeg`, atau `image/webp`.
-- Ukuran upload maksimal 2 MB.
-- Semua path lain ditolak.
 
 ### Validasi actor
 
@@ -698,7 +684,7 @@ Untuk write langsung dari Android:
 - Snapshot dengan `hasPendingWrites` ditampilkan sebagai **Menunggu sinkronisasi**.
 - UI membedakan `Tersimpan`, `Menunggu sinkronisasi`, dan `Gagal`.
 - Operasi Cloud Functions seperti undangan membutuhkan koneksi dan tidak diantrikan sebagai sukses.
-- Penggantian logo membutuhkan koneksi karena melibatkan Storage dan transaction.
+- Perubahan nama komunitas dapat memakai cache Firestore, dengan status pending yang jelas.
 - Laporan dapat menggunakan cache yang tersedia, tetapi UI menampilkan waktu pembaruan terakhir dan indikator offline.
 - Konflik edit rendah karena User tidak dapat mengubah data tersimpan. Untuk dua Admin, Firestore transaction/precondition digunakan pada perubahan yang memerlukan konsistensi.
 
@@ -713,7 +699,6 @@ ValidationError
 DuplicateParticipantError
 DuplicateRegistrationError
 NetworkError
-StorageError
 ExportError
 UnknownError
 ```
@@ -738,7 +723,7 @@ Error teknis lengkap hanya dicatat pada logger non-sensitif; UI menampilkan pesa
 | `auditTrainingWrite` | Firestore trigger | Audit create/update/archive pelatihan |
 | `auditRegistrationWrite` | Firestore trigger | Audit koreksi harga dan pembayaran |
 | `auditUserWrite` | Firestore trigger | Audit role/status akun |
-| `auditSettingsWrite` | Firestore trigger | Audit nama dan logo komunitas |
+| `auditSettingsWrite` | Firestore trigger | Audit nama komunitas |
 
 `bootstrapFirstAdmin` harus dinonaktifkan atau menolak semua request setelah Admin pertama ada.
 
@@ -747,7 +732,7 @@ Error teknis lengkap hanya dicatat pada logger non-sensitif; UI menampilkan pesa
 ### Konfigurasi Android
 
 - `google-services.json` dari Firebase project dengan application ID final.
-- Nama aplikasi dan logo fallback sebagai Android resources.
+- Nama aplikasi dan logo lokal sebagai Android resources.
 - Build type `debug` dan `release`.
 - Minification release dikonfigurasi setelah dependency final dipilih.
 
@@ -755,12 +740,11 @@ Error teknis lengkap hanya dicatat pada logger non-sensitif; UI menampilkan pesa
 
 - Authentication provider Email/Password aktif.
 - Firestore database aktif pada region yang dipilih lembaga.
-- Storage bucket aktif.
-- Cloud Functions dan provider email terkonfigurasi.
-- Firestore Rules, Storage Rules, dan indexes dideploy dari repository.
+- Mekanisme backend undangan ditentukan sebelum Task 5; Cloud Functions hanya dapat dideploy jika project beralih ke Blaze.
+- Firestore Rules dan indexes dideploy dari repository.
 - App Check dapat diaktifkan setelah alur development stabil, sebelum distribusi produksi.
 
-Cloud Functions dan pengiriman email mungkin membutuhkan aktivasi billing atau layanan pihak ketiga. Hal ini harus diperiksa saat Firebase project dibuat.
+Cloud Functions dan pengiriman email membutuhkan paket Blaze atau layanan backend pihak ketiga. Selama project tetap memakai Spark, bagian tersebut belum dapat dideploy dan harus diputuskan sebelum Task 5.
 
 ## 19. Keputusan dan trade-off
 
@@ -775,7 +759,8 @@ Cloud Functions dan pengiriman email mungkin membutuhkan aktivasi billing atau l
 | Contact Picker | Privasi lebih baik | Pemilihan dilakukan satu kontak per aksi |
 | Query laporan per pelatihan | Tidak memerlukan denormalisasi tanggal | Jumlah read bertambah sesuai jumlah pelatihan |
 | PDF native dan XLSX Open XML minimal | Mengurangi dependency besar | Exporter XLSX perlu implementasi teliti |
-| Branding publik read-only | Login dapat menampilkan logo sebelum auth | Logo dan nama komunitas memang bersifat publik |
+| Nama komunitas publik read-only | Login dapat memuat nama sebelum auth | Nama komunitas memang bersifat publik |
+| Logo lokal teroptimasi | Tidak membutuhkan Cloud Storage atau billing Blaze | Perubahan logo memerlukan release aplikasi baru |
 | Arsip, bukan hard delete | Menjaga referensi dan laporan | Data tetap tersimpan |
 
 ## 20. Risiko dan mitigasi
@@ -786,7 +771,7 @@ Cloud Functions dan pengiriman email mungkin membutuhkan aktivasi billing atau l
 | Role UI dimanipulasi | Rules, custom claims, dan callable function memvalidasi server-side |
 | Akun nonaktif masih memegang token lama | Perbarui claims dan revoke refresh token |
 | Dua perangkat mendaftarkan peserta yang sama | Phone index transaction dan registration ID deterministik |
-| Logo baru gagal disimpan | Upload baru, transaction settings, baru hapus logo lama |
+| Logo aplikasi terlalu besar | Kompres ke 640×640 dan bundel sebagai resource `drawable-nodpi` |
 | Link Google Drive tidak dapat dibuka peserta | Validasi URL dan tampilkan pengingat izin berbagi sebelum simpan |
 | WhatsApp dianggap sudah mengirim | Gunakan status/log `WHATSAPP_OPENED`, bukan `SENT` |
 | Data laporan berubah setelah harga master diubah | Gunakan snapshot `Registration.priceAmount` |
@@ -809,7 +794,7 @@ Cloud Functions dan pengiriman email mungkin membutuhkan aktivasi billing atau l
 | REQ-10 | PDF/XLSX exporters, Storage Access Framework |
 | REQ-11 | Firestore repositories, offline metadata |
 | REQ-12 | Claims, Rules, Functions, audit logs |
-| REQ-13 | AppSettingsRepository, Settings screen, Storage branding |
+| REQ-13 | AppSettingsRepository, Settings screen, logo resource lokal |
 
 ## 22. Urutan implementasi
 
@@ -821,5 +806,5 @@ Implementasi mengikuti #[[file:tasks.md]]:
 4. Pelatihan, peserta, pendaftaran, dan pembayaran.
 5. WhatsApp manual.
 6. Laporan dan ekspor.
-7. Pengaturan branding.
+7. Pengaturan nama komunitas dan integrasi logo lokal.
 8. Sinkronisasi, audit, dan verifikasi penerimaan.

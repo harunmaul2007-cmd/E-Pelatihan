@@ -244,6 +244,18 @@ Pendekatan ini menghindari job terjadwal hanya untuk mengganti status pelatihan.
 - Nilai tidak boleh negatif.
 - `Registration.priceAmount` tidak dihitung ulang saat laporan dibuka.
 
+### Komponen validasi domain
+
+- `TrainingValidator` memeriksa field wajib, urutan jadwal, zona waktu, metode pertemuan, URL HTTPS, dan skema harga.
+- `RegistrationPricingPolicy` memilih harga dari master tanpa menerima nominal bebas.
+- `RegistrationFactory` membuat snapshot harga dan status awal `BELUM_BAYAR`.
+- `RegistrationValidator` memeriksa relasi, snapshot harga, dan konsistensi metadata pembayaran.
+- `PhoneNumberNormalizer` menghasilkan nomor internasional kanonik.
+- `ParticipantPhoneKeyFactory` dan `RegistrationIdFactory` menghasilkan ID SHA-256 yang stabil.
+- `MoneyAmountParser` mengubah input Rupiah langsung menjadi `Long` tanpa `Float`/`Double`.
+- `AppSettingsValidator` memangkas dan memvalidasi nama komunitas maksimal 100 karakter.
+- `TrainingStatusResolver` menurunkan status tampilan dari lifecycle dan waktu.
+
 ## 9. Desain data Firestore
 
 Semua nama field menggunakan `camelCase`. Timestamp berasal dari server bila field mewakili waktu mutasi.
@@ -333,6 +345,15 @@ Aturan field kondisional:
 ```
 
 Nomor Indonesia dinormalisasi ke digit internasional tanpa `+`, spasi, atau tanda baca. Nomor negara lain yang sudah memiliki kode negara dipertahankan dalam format digit internasional.
+
+Kebijakan normalisasi:
+
+- `08…`, `8…`, `62…`, `+62…`, dan `0062…` diterima sebagai nomor Indonesia.
+- Nomor negara lain harus diawali `+` atau `00` agar kode negara tidak ambigu.
+- Spasi, tanda hubung, titik, dan tanda kurung dibersihkan.
+- Huruf, tanda `+` di tengah, karakter lain, serta panjang di luar 8–15 digit ditolak.
+- Nomor tersimpan dan URL WhatsApp menggunakan hasil normalisasi; `phoneDisplay` tetap menyimpan bentuk ramah baca.
+- `participantPhoneIndex` menggunakan SHA-256 dari nomor hasil normalisasi sebagai document ID.
 
 ### 9.5 `participantPhoneIndex/{phoneKey}`
 

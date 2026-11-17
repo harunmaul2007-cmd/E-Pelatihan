@@ -18,7 +18,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Dokumentasikan konfigurasi Firebase yang harus disediakan di luar repositori.
   - **Mencakup:** REQ-01, REQ-02, REQ-11, REQ-12, REQ-13.
 
-- [ ] 3. Implementasikan model domain dan aturan validasi
+- [x] 3. Implementasikan model domain dan aturan validasi
   - Buat model `AppSettings`, `UserProfile`, `Training`, `Participant`, `Registration`, `WhatsAppOpenLog`, dan `AuditLog`.
   - Buat enum untuk role, metode pertemuan, skema harga, jenis harga, status pembayaran, dan status pelatihan.
   - Terapkan validasi jadwal, metode online/offline, URL HTTPS, nominal harga, serta hubungan harga early bird dan normal.

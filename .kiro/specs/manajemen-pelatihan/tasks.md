@@ -2,7 +2,7 @@
 
 Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerjakan task secara berurutan karena beberapa task bergantung pada model dan infrastruktur dari task sebelumnya.
 
-- [ ] 1. Inisialisasi proyek Android
+- [x] 1. Inisialisasi proyek Android
   - Buat proyek Kotlin Android dengan Jetpack Compose dan struktur package yang konsisten.
   - Tetapkan arsitektur berlapis untuk UI, domain, dan data.
   - Tambahkan dependency dasar untuk Compose Navigation, ViewModel, coroutine, Firebase, serialisasi, dan dependency injection.

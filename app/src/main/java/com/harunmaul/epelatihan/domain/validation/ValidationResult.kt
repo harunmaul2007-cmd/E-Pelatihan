@@ -2,6 +2,9 @@ package com.harunmaul.epelatihan.domain.validation
 
 enum class ValidationField {
     COMMUNITY_NAME,
+    DISPLAY_NAME,
+    EMAIL,
+    PASSWORD,
     TRAINING_NAME,
     START_AT,
     END_AT,
@@ -30,6 +33,7 @@ enum class ValidationCode {
     REQUIRED,
     INVALID_FORMAT,
     TOO_LONG,
+    TOO_SHORT,
     MUST_BE_AFTER,
     MUST_BE_HTTPS,
     MUST_BE_EMPTY,

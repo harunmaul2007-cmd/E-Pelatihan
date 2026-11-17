@@ -1,0 +1,279 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // Helper Functions
+    // ==========================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function userDocExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Periksa apakah admin pertama sudah terdaftar di sistem
+    function hasAnyAdmin() {
+      return exists(/databases/$(database)/documents/appSettings/general) &&
+             ('hasAnyAdmin' in get(/databases/$(database)/documents/appSettings/general).data) &&
+             get(/databases/$(database)/documents/appSettings/general).data.hasAnyAdmin == true;
+    }
+
+    // Validasi role dan status aktif pengguna melalui dokumen users
+    function isDocAdmin(userId) {
+      return userDocExists(userId) &&
+             ('role' in getUserData(userId)) && getUserData(userId).role == 'ADMIN' &&
+             ('active' in getUserData(userId)) && getUserData(userId).active == true;
+    }
+
+    function isDocActiveUser(userId) {
+      return userDocExists(userId) &&
+             ('role' in getUserData(userId)) && (getUserData(userId).role in ['ADMIN', 'USER']) &&
+             ('active' in getUserData(userId)) && getUserData(userId).active == true;
+    }
+
+    // Admin aktif (didukung via custom claim token atau fallback dokumen users)
+    function isAdmin() {
+      return isAuthenticated() && (
+        (
+          ('active' in request.auth.token && request.auth.token.active == true) &&
+          ('role' in request.auth.token && request.auth.token.role == 'ADMIN')
+        ) ||
+        isDocAdmin(request.auth.uid)
+      );
+    }
+
+    // Akun lembaga yang aktif (Admin atau User)
+    function isActiveUser() {
+      return isAuthenticated() && (
+        (
+          ('active' in request.auth.token && request.auth.token.active == true) &&
+          ('role' in request.auth.token && request.auth.token.role in ['ADMIN', 'USER'])
+        ) ||
+        isDocActiveUser(request.auth.uid)
+      );
+    }
+
+    // Validasi harga pendaftaran terhadap dokumen master pelatihan
+    function isValidRegistrationPrice(regData) {
+      let training = get(/databases/$(database)/documents/trainings/$(regData.trainingId)).data;
+      return (
+        training.pricingScheme == 'NORMAL_ONLY' &&
+        regData.pricingType == 'NORMAL' &&
+        regData.priceAmount == training.normalPrice
+      ) || (
+        training.pricingScheme == 'EARLY_BIRD_AND_NORMAL' && (
+          (regData.pricingType == 'NORMAL' && regData.priceAmount == training.normalPrice) ||
+          (regData.pricingType == 'EARLY_BIRD' && regData.priceAmount == training.earlyBirdPrice)
+        )
+      );
+    }
+
+    // ==========================================
+    // 1. appSettings/general
+    // ==========================================
+    match /appSettings/{docId} {
+      // Izinkan pembacaan publik hanya pada nama komunitas dan metadata non-sensitif yang dibutuhkan layar login.
+      allow read: if true;
+
+      // Batasi perubahan dokumen pengaturan hanya untuk Admin aktif
+      // (atau saat bootstrap awal jika belum ada Admin terdaftar).
+      allow create, update: if (
+        isAdmin() ||
+        (!hasAnyAdmin() && isAuthenticated())
+      ) &&
+      (!('communityName' in request.resource.data) || (
+        request.resource.data.communityName is string &&
+        request.resource.data.communityName.size() <= 100
+      ));
+
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 2. users/{userId}
+    // ==========================================
+    match /users/{userId} {
+      // Admin aktif dapat membaca seluruh user; User hanya membaca profilnya sendiri.
+      allow get: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+
+      // Bootstrap admin pertama jika belum ada admin terdaftar di sistem,
+      // ATAU Admin aktif mengundang user baru.
+      allow create: if (
+        isAdmin() && request.resource.data.createdBy == request.auth.uid
+      ) || (
+        !hasAnyAdmin() &&
+        isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.data.role == 'ADMIN' &&
+        request.resource.data.active == true &&
+        request.resource.data.createdBy == userId
+      );
+
+      // Hanya Admin aktif yang dapat memperbarui pengguna.
+      // Admin tidak boleh menonaktifkan akun sendiri atau mencabut hak admin akun sendiri.
+      allow update: if isAdmin() &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        !(
+          request.auth.uid == userId &&
+          (request.resource.data.active == false || request.resource.data.role != 'ADMIN')
+        );
+
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 3. trainings/{trainingId}
+    // ==========================================
+    match /trainings/{trainingId} {
+      // Izinkan pembacaan data operasional hanya untuk akun lembaga yang aktif.
+      allow read: if isActiveUser();
+
+      // Izinkan Admin dan User membuat pelatihan.
+      allow create: if isActiveUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.lifecycle == 'ACTIVE' &&
+        request.resource.data.meetingMethod in ['ONLINE', 'OFFLINE'] &&
+        (
+          (request.resource.data.meetingMethod == 'ONLINE' && request.resource.data.zoomUrl != null) ||
+          (request.resource.data.meetingMethod == 'OFFLINE' && request.resource.data.location != null)
+        ) &&
+        request.resource.data.pricingScheme in ['NORMAL_ONLY', 'EARLY_BIRD_AND_NORMAL'] &&
+        request.resource.data.normalPrice is int && request.resource.data.normalPrice >= 0 &&
+        (
+          (request.resource.data.pricingScheme == 'NORMAL_ONLY' &&
+           (!('earlyBirdPrice' in request.resource.data) || request.resource.data.earlyBirdPrice == null)) ||
+          (request.resource.data.pricingScheme == 'EARLY_BIRD_AND_NORMAL' &&
+           request.resource.data.earlyBirdPrice is int &&
+           request.resource.data.earlyBirdPrice >= 0 &&
+           request.resource.data.earlyBirdPrice < request.resource.data.normalPrice)
+        );
+
+      // Izinkan perubahan atau pengarsipan pelatihan hanya untuk Admin.
+      // Pastikan field yang dilindungi tidak dapat diubah (createdBy, createdAt).
+      // Pengguna non-admin ditolak saat mencoba update (baik parsial maupun penuh).
+      allow update: if isAdmin() &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedBy == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 4. participants/{participantId}
+    // ==========================================
+    match /participants/{participantId} {
+      // Izinkan pembacaan data operasional hanya untuk akun lembaga yang aktif.
+      allow read: if isActiveUser();
+
+      // Izinkan Admin dan User membuat peserta.
+      allow create: if isActiveUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.name is string && request.resource.data.name.size() > 0 &&
+        request.resource.data.phoneNormalized is string && request.resource.data.phoneNormalized.size() >= 8 &&
+        request.resource.data.active == true;
+
+      // Izinkan perubahan atau pengarsipan peserta hanya untuk Admin.
+      // Pastikan field yang dilindungi tidak dapat diubah (createdBy, createdAt).
+      // Pengguna non-admin ditolak saat mencoba update.
+      allow update: if isAdmin() &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedBy == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 5. participantPhoneIndex/{phoneKey}
+    // ==========================================
+    match /participantPhoneIndex/{phoneKey} {
+      allow read: if isActiveUser();
+      allow create: if isActiveUser();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // 6. registrations/{registrationId}
+    // ==========================================
+    match /registrations/{registrationId} {
+      // Izinkan pembacaan data operasional hanya untuk akun lembaga yang aktif.
+      allow read: if isActiveUser();
+
+      // Izinkan Admin dan User membuat pendaftaran.
+      // Saat create, periksa master pelatihan dan pastikan:
+      // - NORMAL_ONLY hanya menerima NORMAL dan priceAmount == normalPrice.
+      // - Early bird menerima EARLY_BIRD atau NORMAL dengan nominal yang cocok.
+      // - User tidak dapat mengirim nominal bebas.
+      // - Status awal selalu BELUM_BAYAR.
+      allow create: if isActiveUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.paymentStatus == 'BELUM_BAYAR' &&
+        (!('paidAt' in request.resource.data) || request.resource.data.paidAt == null) &&
+        (!('paidBy' in request.resource.data) || request.resource.data.paidBy == null) &&
+        request.resource.data.pricingType in ['NORMAL', 'EARLY_BIRD'] &&
+        exists(/databases/$(database)/documents/trainings/$(request.resource.data.trainingId)) &&
+        isValidRegistrationPrice(request.resource.data);
+
+      // Izinkan perubahan (status pembayaran, jenis harga tersimpan, dsb.) HANYA untuk Admin.
+      // User ditolak jika mencoba melakukan update parsial atau penuh.
+      // Lindungi field yang tidak boleh diubah: trainingId, participantId, createdBy, createdAt.
+      allow update: if isAdmin() &&
+        request.resource.data.trainingId == resource.data.trainingId &&
+        request.resource.data.participantId == resource.data.participantId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedBy == request.auth.uid;
+
+      // Hanya Admin yang dapat menghapus data pendaftaran jika diperlukan.
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // 7. whatsappOpenLogs/{logId}
+    // ==========================================
+    match /whatsappOpenLogs/{logId} {
+      // Izinkan pembacaan log pembukaan WA untuk user aktif.
+      allow read: if isActiveUser();
+
+      // Izinkan pencatatan pembukaan WA untuk user aktif terhadap pendaftaran yang berstatus LUNAS.
+      allow create: if isActiveUser() &&
+        request.resource.data.openedBy == request.auth.uid &&
+        exists(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)) &&
+        get(/databases/$(database)/documents/registrations/$(request.resource.data.registrationId)).data.paymentStatus == 'LUNAS';
+
+      // Immutable log
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // 8. auditLogs/{eventId}
+    // ==========================================
+    match /auditLogs/{eventId} {
+      // Batasi pembacaan audit log sensitif hanya untuk Admin aktif.
+      allow read: if isAdmin();
+
+      // Izinkan pencatatan audit log oleh pengguna terautentikasi (actorId harus sesuai user login).
+      allow create: if isAuthenticated() &&
+        request.resource.data.actorId == request.auth.uid;
+
+      // Immutable log
+      allow update, delete: if false;
+    }
+  }
+}

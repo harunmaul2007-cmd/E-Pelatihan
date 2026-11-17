@@ -26,7 +26,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Buat normalisasi nomor WhatsApp Indonesia dengan hasil yang konsisten.
   - **Mencakup:** REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-13.
 
-- [ ] 4. Implementasikan login, sesi, dan pemulihan password
+- [x] 4. Implementasikan login, sesi, dan pemulihan password
   - Buat layar login email/password.
   - Muat nama komunitas dari Firestore dan logo lokal pada layar login dengan fallback nama aplikasi.
   - Hubungkan login dan logout ke Firebase Authentication.
@@ -36,7 +36,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Atur navigasi awal berdasarkan status login dan role.
   - **Mencakup:** REQ-01, REQ-13.
 
-- [ ] 5. Implementasikan bootstrap Admin dan undangan pengguna
+- [x] 5. Implementasikan bootstrap Admin dan undangan pengguna
   - Tentukan mekanisme undangan yang kompatibel dengan keputusan tetap memakai Spark; Cloud Functions tidak dapat dideploy pada paket ini.
   - Jika tersedia backend berizin, implementasikan operasi Firebase Admin SDK di backend tersebut; jika tidak, gunakan proses pembuatan akun manual melalui Firebase Console.
   - Sediakan mekanisme terbatas untuk membuat Admin pertama.
@@ -46,7 +46,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Catat perubahan role dan status pengguna dalam audit log.
   - **Mencakup:** REQ-02, REQ-12.
 
-- [ ] 6. Terapkan Firestore Security Rules dan otorisasi backend
+- [x] 6. Terapkan Firestore Security Rules dan otorisasi backend
   - Izinkan pembacaan data operasional hanya untuk akun lembaga yang aktif.
   - Izinkan Admin dan User membuat pelatihan, peserta, dan pendaftaran.
   - Izinkan perubahan atau pengarsipan pelatihan, peserta, dan pendaftaran hanya untuk Admin.
@@ -57,14 +57,14 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Pastikan field yang dilindungi tidak dapat diubah melalui update parsial oleh User.
   - **Mencakup:** REQ-02, REQ-03, REQ-05, REQ-06, REQ-07, REQ-12, REQ-13.
 
-- [ ] 7. Implementasikan daftar dan detail pelatihan
+- [x] 7. Implementasikan daftar dan detail pelatihan
   - Buat layar daftar pelatihan dengan status loading, kosong, gagal, dan offline.
   - Buat layar detail yang menampilkan jadwal, pemateri, metode, lokasi/link, dan harga.
   - Tampilkan aksi sesuai role: Admin dapat mengubah/mengarsipkan, User hanya melihat.
   - Gunakan listener Firestore agar perubahan terlihat pada perangkat lain.
   - **Mencakup:** REQ-03, REQ-11.
 
-- [ ] 8. Implementasikan formulir tambah dan ubah pelatihan
+- [x] 8. Implementasikan formulir tambah dan ubah pelatihan
   - Buat input nama, deskripsi, tanggal, jam mulai/selesai, dan pemateri.
   - Buat pilihan metode online/offline dengan field kondisional link Zoom atau lokasi.
   - Tambahkan link rekaman dan PDF/materi sebagai URL opsional.

@@ -7,6 +7,7 @@ import com.google.firebase.firestore.ServerTimestamp
 data class AppSettingsDocument(
     var communityName: String = "",
     var schemaVersion: Int = 1,
+    var hasAnyAdmin: Boolean = false,
     var updatedBy: String? = null,
     @get:ServerTimestamp
     var updatedAt: Timestamp? = null,

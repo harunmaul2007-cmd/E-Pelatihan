@@ -14,6 +14,7 @@ class DefaultAppInfoRepository @Inject constructor() : AppInfoRepository {
         AppInfo(
             name = "E-Pelatihan",
             environment = BuildConfig.ENVIRONMENT,
+            firebaseConfigured = BuildConfig.FIREBASE_CONFIGURED,
         ),
     )
 }

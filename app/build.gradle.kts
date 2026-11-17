@@ -9,6 +9,11 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val firebaseConfigFile = file("google-services.json")
+if (firebaseConfigFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.harunmaul.epelatihan"
     compileSdk = 36
@@ -19,6 +24,11 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+        buildConfigField(
+            "boolean",
+            "FIREBASE_CONFIGURED",
+            firebaseConfigFile.exists().toString(),
+        )
 
         vectorDrawables {
             useSupportLibrary = true
@@ -27,7 +37,6 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("String", "ENVIRONMENT", "\"development\"")
         }

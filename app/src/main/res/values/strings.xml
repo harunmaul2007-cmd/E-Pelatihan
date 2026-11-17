@@ -5,6 +5,8 @@
     <string name="home_ready_title">Fondasi aplikasi siap</string>
     <string name="home_ready_description">Proyek Android telah disiapkan untuk implementasi fitur manajemen pelatihan.</string>
     <string name="home_environment">Environment: %1$s</string>
+    <string name="home_firebase_ready">Firebase: terkonfigurasi</string>
+    <string name="home_firebase_pending">Firebase: menunggu google-services.json</string>
     <string name="home_sections_title">Modul yang akan dibangun</string>
     <string name="feature_training">Pelatihan</string>
     <string name="feature_participant">Peserta</string>

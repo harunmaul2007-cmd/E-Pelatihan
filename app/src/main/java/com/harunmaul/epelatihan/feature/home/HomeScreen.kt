@@ -142,6 +142,19 @@ private fun HomeScreen(
                     fontWeight = FontWeight.Medium,
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(
+                    if (uiState.firebaseConfigured) {
+                        R.string.home_firebase_ready
+                    } else {
+                        R.string.home_firebase_pending
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

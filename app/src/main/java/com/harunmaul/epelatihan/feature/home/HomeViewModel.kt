@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 data class HomeUiState(
     val appName: String = "E-Pelatihan",
     val environment: String = "development",
+    val firebaseConfigured: Boolean = false,
 )
 
 @HiltViewModel
@@ -24,6 +25,7 @@ class HomeViewModel @Inject constructor(
             HomeUiState(
                 appName = appInfo.name,
                 environment = appInfo.environment,
+                firebaseConfigured = appInfo.firebaseConfigured,
             )
         }
         .stateIn(

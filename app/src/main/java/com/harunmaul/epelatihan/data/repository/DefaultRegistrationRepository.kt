@@ -30,7 +30,6 @@ class DefaultRegistrationRepository @Inject constructor(
     override fun observeRegistrationsByTraining(trainingId: String): Flow<AppResult<RegistrationListSnapshot>> = callbackFlow {
         val query = references.registrations
             .whereEqualTo("trainingId", trainingId)
-            .orderBy("createdAt", Query.Direction.ASCENDING)
 
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -46,7 +45,7 @@ class DefaultRegistrationRepository @Inject constructor(
                     } catch (_: Exception) {
                         null
                     }
-                }
+                }.sortedWith(compareBy { it.createdAt ?: java.time.Instant.MIN })
                 val isFromCache = snapshot.metadata.isFromCache
                 trySend(AppResult.Success(RegistrationListSnapshot(registrations, isFromCache)))
             } else {

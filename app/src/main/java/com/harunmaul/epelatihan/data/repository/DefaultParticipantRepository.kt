@@ -28,11 +28,10 @@ class DefaultParticipantRepository @Inject constructor(
 
     override fun observeParticipants(includeInactive: Boolean): Flow<AppResult<ParticipantListSnapshot>> = callbackFlow {
         val query = if (includeInactive) {
-            references.participants.orderBy("nameSort", Query.Direction.ASCENDING)
+            references.participants
         } else {
             references.participants
                 .whereEqualTo("active", true)
-                .orderBy("nameSort", Query.Direction.ASCENDING)
         }
 
         val listener = query.addSnapshotListener { snapshot, error ->
@@ -49,7 +48,7 @@ class DefaultParticipantRepository @Inject constructor(
                     } catch (_: Exception) {
                         null
                     }
-                }
+                }.sortedBy { it.nameSort }
                 val isFromCache = snapshot.metadata.isFromCache
                 trySend(AppResult.Success(ParticipantListSnapshot(participants, isFromCache)))
             } else {

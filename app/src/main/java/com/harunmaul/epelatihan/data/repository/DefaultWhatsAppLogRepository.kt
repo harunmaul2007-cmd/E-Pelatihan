@@ -54,7 +54,6 @@ class DefaultWhatsAppLogRepository @Inject constructor(
     override fun observeLogsByRegistration(registrationId: String): Flow<List<WhatsAppOpenLog>> = callbackFlow {
         val listener = references.whatsappOpenLogs
             .whereEqualTo("registrationId", registrationId)
-            .orderBy("openedAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())
@@ -68,7 +67,7 @@ class DefaultWhatsAppLogRepository @Inject constructor(
                     } catch (_: Exception) {
                         null
                     }
-                }.orEmpty()
+                }.orEmpty().sortedWith(compareByDescending { it.openedAt ?: java.time.Instant.MIN })
                 trySend(logs)
             }
         awaitClose { listener.remove() }

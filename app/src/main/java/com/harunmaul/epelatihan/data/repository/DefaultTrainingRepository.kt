@@ -28,11 +28,10 @@ class DefaultTrainingRepository @Inject constructor(
 
     override fun observeTrainings(includeArchived: Boolean): Flow<AppResult<TrainingListSnapshot>> = callbackFlow {
         val query = if (includeArchived) {
-            references.trainings.orderBy("startAt", Query.Direction.ASCENDING)
+            references.trainings
         } else {
             references.trainings
                 .whereEqualTo("lifecycle", TrainingLifecycle.ACTIVE.name)
-                .orderBy("startAt", Query.Direction.ASCENDING)
         }
 
         val listener = query.addSnapshotListener { snapshot, error ->
@@ -49,7 +48,7 @@ class DefaultTrainingRepository @Inject constructor(
                     } catch (_: Exception) {
                         null
                     }
-                }
+                }.sortedBy { it.startAt }
                 val isFromCache = snapshot.metadata.isFromCache
                 trySend(AppResult.Success(TrainingListSnapshot(trainings, isFromCache)))
             } else {

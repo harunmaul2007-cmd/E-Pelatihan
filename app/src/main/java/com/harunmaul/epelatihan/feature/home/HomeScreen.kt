@@ -57,6 +57,7 @@ fun HomeRoute(
     onNavigateToUserManagement: () -> Unit = {},
     onNavigateToTrainings: () -> Unit = {},
     onNavigateToParticipants: () -> Unit = {},
+    onNavigateToReport: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -95,6 +96,7 @@ fun HomeRoute(
         onNavigateToUserManagement = onNavigateToUserManagement,
         onNavigateToTrainings = onNavigateToTrainings,
         onNavigateToParticipants = onNavigateToParticipants,
+        onNavigateToReport = onNavigateToReport,
     )
 }
 
@@ -106,6 +108,7 @@ private fun HomeScreen(
     onNavigateToUserManagement: () -> Unit = {},
     onNavigateToTrainings: () -> Unit = {},
     onNavigateToParticipants: () -> Unit = {},
+    onNavigateToReport: () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
@@ -253,7 +256,10 @@ private fun HomeScreen(
                             labelRes = R.string.feature_participant,
                             onClick = onNavigateToParticipants,
                         )
-                        FeatureChip(R.string.feature_report)
+                        FeatureChip(
+                            labelRes = R.string.feature_report,
+                            onClick = onNavigateToReport,
+                        )
                         FeatureChip(R.string.feature_settings)
                         if (uiState.currentUser?.role == UserRole.ADMIN) {
                             AssistChip(

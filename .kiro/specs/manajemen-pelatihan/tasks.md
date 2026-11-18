@@ -112,7 +112,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Pastikan tidak ada WhatsApp API atau pengiriman otomatis.
   - **Mencakup:** REQ-08.
 
-- [ ] 13. Implementasikan laporan bulanan
+- [x] 13. Implementasikan laporan bulanan
   - Buat filter bulan dan tahun berdasarkan tanggal jadwal pelatihan.
   - Hitung jumlah pelatihan, seluruh pendaftar, peserta lunas, dan peserta belum bayar.
   - Hitung jumlah pendaftar early bird dan normal.

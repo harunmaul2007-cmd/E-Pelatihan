@@ -249,4 +249,23 @@
     <string name="whatsapp_lunas_only_notice">WhatsApp hanya tersedia untuk peserta berstatus LUNAS.</string>
     <string name="whatsapp_unavailable">WhatsApp tidak dapat dibuka pada perangkat ini.</string>
     <string name="close">Tutup</string>
+
+    <!-- Monthly Report Feature -->
+    <string name="report_title">Laporan Bulanan</string>
+    <string name="report_summary_title">Ringkasan Bulanan</string>
+    <string name="report_trainings_detail_title">Rincian per Pelatihan</string>
+    <string name="metric_training_count">Jumlah Pelatihan</string>
+    <string name="metric_total_registrations">Total Pendaftar</string>
+    <string name="metric_paid_count">Peserta Lunas</string>
+    <string name="metric_unpaid_count">Belum Bayar</string>
+    <string name="metric_early_bird_count">Early Bird</string>
+    <string name="metric_normal_count">Normal</string>
+    <string name="metric_total_billed">Total Tagihan</string>
+    <string name="metric_total_income">Total Pemasukan</string>
+    <string name="metric_outstanding">Sisa Belum Dibayar</string>
+    <string name="empty_report_title">Tidak Ada Kegiatan Pelatihan</string>
+    <string name="empty_report_description">Tidak ada jadwal kegiatan pelatihan yang tercatat pada bulan ini.</string>
+    <string name="filter_month_year">Pilih Bulan &amp; Tahun</string>
+    <string name="export_report_button">Ekspor Laporan</string>
+    <string name="loading_report">Memuat laporan bulanan…</string>
 </resources>

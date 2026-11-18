@@ -33,6 +33,7 @@ import com.harunmaul.epelatihan.feature.home.HomeRoute
 import com.harunmaul.epelatihan.feature.participant.detail.ParticipantDetailRoute
 import com.harunmaul.epelatihan.feature.participant.form.ParticipantFormRoute
 import com.harunmaul.epelatihan.feature.participant.list.ParticipantListRoute
+import com.harunmaul.epelatihan.feature.report.MonthlyReportRoute
 import com.harunmaul.epelatihan.feature.training.detail.TrainingDetailRoute
 import com.harunmaul.epelatihan.feature.training.form.TrainingFormRoute
 import com.harunmaul.epelatihan.feature.training.list.TrainingListRoute
@@ -74,6 +75,9 @@ data class ParticipantDetailDestination(val participantId: String)
 
 @Serializable
 data class ParticipantFormDestination(val participantId: String? = null, val initialPhone: String? = null)
+
+@Serializable
+data object MonthlyReportDestination
 
 @Composable
 fun AppNavHost(
@@ -145,6 +149,9 @@ fun AppNavHost(
                 },
                 onNavigateToParticipants = {
                     navController.navigate(ParticipantListDestination)
+                },
+                onNavigateToReport = {
+                    navController.navigate(MonthlyReportDestination)
                 },
             )
         }
@@ -225,6 +232,17 @@ fun AppNavHost(
                 },
                 onSaveSuccess = {
                     navController.popBackStack()
+                },
+            )
+        }
+
+        composable<MonthlyReportDestination> {
+            MonthlyReportRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToTrainingDetail = { trainingId ->
+                    navController.navigate(TrainingDetailDestination(trainingId))
                 },
             )
         }

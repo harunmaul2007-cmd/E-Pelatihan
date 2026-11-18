@@ -267,5 +267,12 @@
     <string name="empty_report_description">Tidak ada jadwal kegiatan pelatihan yang tercatat pada bulan ini.</string>
     <string name="filter_month_year">Pilih Bulan &amp; Tahun</string>
     <string name="export_report_button">Ekspor Laporan</string>
+    <string name="export_pdf_button">Ekspor PDF</string>
+    <string name="export_xlsx_button">Ekspor Excel (XLSX)</string>
+    <string name="export_pdf_success">Laporan PDF berhasil disimpan.</string>
+    <string name="export_xlsx_success">Laporan Excel berhasil disimpan.</string>
+    <string name="export_failed">Gagal mengekspor laporan: %1$s</string>
+    <string name="exporting_progress">Mengekspor laporan…</string>
+    <string name="export_menu_title">Pilih Format Ekspor</string>
     <string name="loading_report">Memuat laporan bulanan…</string>
 </resources>

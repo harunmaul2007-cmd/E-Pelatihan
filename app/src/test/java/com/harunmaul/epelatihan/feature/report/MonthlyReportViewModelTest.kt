@@ -2,6 +2,8 @@ package com.harunmaul.epelatihan.feature.report
 
 import com.harunmaul.epelatihan.core.common.AppResult
 import com.harunmaul.epelatihan.core.common.NetworkException
+import com.harunmaul.epelatihan.domain.exporter.ReportExporter
+import com.harunmaul.epelatihan.domain.model.AppSettings
 import com.harunmaul.epelatihan.domain.model.MonthlyReport
 import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.PricingType
@@ -13,10 +15,16 @@ import com.harunmaul.epelatihan.domain.model.TrainingDetailSnapshot
 import com.harunmaul.epelatihan.domain.model.TrainingListSnapshot
 import com.harunmaul.epelatihan.domain.model.UserProfile
 import com.harunmaul.epelatihan.domain.model.UserSession
+import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuthRepository
 import com.harunmaul.epelatihan.domain.repository.RegistrationRepository
 import com.harunmaul.epelatihan.domain.repository.TrainingRepository
+import com.harunmaul.epelatihan.domain.usecase.ExportReportPdfUseCase
+import com.harunmaul.epelatihan.domain.usecase.ExportReportXlsxUseCase
 import com.harunmaul.epelatihan.domain.usecase.GenerateMonthlyReportUseCase
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.time.Instant
 import java.time.YearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -123,6 +131,16 @@ class MonthlyReportViewModelTest {
         override suspend fun getCurrentUserProfile(): UserProfile? = null
     }
 
+    private class DummyAppSettingsRepo : AppSettingsRepository {
+        override fun observeAppSettings(): Flow<AppSettings> = flowOf(AppSettings("Komunitas", 1, null, null))
+        override suspend fun getAppSettings(): AppSettings = AppSettings("Komunitas", 1, null, null)
+    }
+
+    private class DummyReportExporter : ReportExporter {
+        override suspend fun exportPdf(report: MonthlyReport, communityName: String, outputStream: OutputStream) {}
+        override suspend fun exportXlsx(report: MonthlyReport, communityName: String, outputStream: OutputStream) {}
+    }
+
     private class FakeGenerateMonthlyReportUseCase(
         private val reportMap: Map<YearMonth, MonthlyReport> = emptyMap(),
         private val shouldFail: Boolean = false,
@@ -156,6 +174,40 @@ class MonthlyReportViewModelTest {
         }
     }
 
+    private class FakeExportReportPdfUseCase(
+        private val shouldFail: Boolean = false,
+    ) : ExportReportPdfUseCase(
+        DummyReportExporter(),
+        DummyAppSettingsRepo(),
+        DummyAuthRepo(),
+    ) {
+        var wasCalled = false
+
+        override suspend fun invoke(report: MonthlyReport, outputStream: OutputStream): AppResult<Unit> {
+            wasCalled = true
+            if (shouldFail) return AppResult.Failure(IllegalStateException("Gagal membuat PDF"))
+            outputStream.write("dummy-pdf".toByteArray())
+            return AppResult.Success(Unit)
+        }
+    }
+
+    private class FakeExportReportXlsxUseCase(
+        private val shouldFail: Boolean = false,
+    ) : ExportReportXlsxUseCase(
+        DummyReportExporter(),
+        DummyAppSettingsRepo(),
+        DummyAuthRepo(),
+    ) {
+        var wasCalled = false
+
+        override suspend fun invoke(report: MonthlyReport, outputStream: OutputStream): AppResult<Unit> {
+            wasCalled = true
+            if (shouldFail) return AppResult.Failure(IllegalStateException("Gagal membuat Excel"))
+            outputStream.write("dummy-xlsx".toByteArray())
+            return AppResult.Success(Unit)
+        }
+    }
+
     @Test
     fun `init loads report for current month automatically`() = runTest(testDispatcher) {
         val currentMonth = YearMonth.now()
@@ -163,7 +215,11 @@ class MonthlyReportViewModelTest {
             mapOf(currentMonth to dummyReportMay.copy(month = currentMonth)),
         )
 
-        val viewModel = MonthlyReportViewModel(fakeUseCase)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            FakeExportReportXlsxUseCase(),
+        )
 
         // Initially loading
         assertTrue(viewModel.uiState.value.isLoading)
@@ -184,7 +240,11 @@ class MonthlyReportViewModelTest {
             mapOf(may to dummyReportMay, june to dummyReportJune),
         )
 
-        val viewModel = MonthlyReportViewModel(fakeUseCase)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            FakeExportReportXlsxUseCase(),
+        )
         advanceUntilIdle()
 
         viewModel.selectMonth(may)
@@ -205,7 +265,11 @@ class MonthlyReportViewModelTest {
     @Test
     fun `previousMonth and nextMonth step month by one correctly`() = runTest(testDispatcher) {
         val fakeUseCase = FakeGenerateMonthlyReportUseCase()
-        val viewModel = MonthlyReportViewModel(fakeUseCase)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            FakeExportReportXlsxUseCase(),
+        )
         advanceUntilIdle()
 
         val baseMonth = YearMonth.of(2026, 5)
@@ -226,7 +290,11 @@ class MonthlyReportViewModelTest {
     @Test
     fun `loadReport failure populates errorMessage and stops loading`() = runTest(testDispatcher) {
         val fakeUseCase = FakeGenerateMonthlyReportUseCase(shouldFail = true)
-        val viewModel = MonthlyReportViewModel(fakeUseCase)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            FakeExportReportXlsxUseCase(),
+        )
 
         advanceUntilIdle()
 
@@ -236,5 +304,91 @@ class MonthlyReportViewModelTest {
 
         viewModel.clearErrorMessage()
         assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `exportPdf success sets successMessage and clears isExporting`() = runTest(testDispatcher) {
+        val fakeUseCase = FakeGenerateMonthlyReportUseCase(mapOf(YearMonth.now() to dummyReportMay))
+        val fakePdfUseCase = FakeExportReportPdfUseCase()
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            fakePdfUseCase,
+            FakeExportReportXlsxUseCase(),
+        )
+        advanceUntilIdle()
+
+        val out = ByteArrayOutputStream()
+        viewModel.exportPdf(out)
+        advanceUntilIdle()
+
+        assertTrue(fakePdfUseCase.wasCalled)
+        assertFalse(viewModel.uiState.value.isExporting)
+        assertEquals("Laporan PDF berhasil disimpan.", viewModel.uiState.value.successMessage)
+
+        viewModel.clearSuccessMessage()
+        assertNull(viewModel.uiState.value.successMessage)
+    }
+
+    @Test
+    fun `exportPdf failure sets errorMessage and clears isExporting`() = runTest(testDispatcher) {
+        val fakeUseCase = FakeGenerateMonthlyReportUseCase(mapOf(YearMonth.now() to dummyReportMay))
+        val fakePdfUseCase = FakeExportReportPdfUseCase(shouldFail = true)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            fakePdfUseCase,
+            FakeExportReportXlsxUseCase(),
+        )
+        advanceUntilIdle()
+
+        val out = ByteArrayOutputStream()
+        viewModel.exportPdf(out)
+        advanceUntilIdle()
+
+        assertTrue(fakePdfUseCase.wasCalled)
+        assertFalse(viewModel.uiState.value.isExporting)
+        assertEquals("Gagal membuat PDF", viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `exportXlsx success sets successMessage and clears isExporting`() = runTest(testDispatcher) {
+        val fakeUseCase = FakeGenerateMonthlyReportUseCase(mapOf(YearMonth.now() to dummyReportMay))
+        val fakeXlsxUseCase = FakeExportReportXlsxUseCase()
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            fakeXlsxUseCase,
+        )
+        advanceUntilIdle()
+
+        val out = ByteArrayOutputStream()
+        viewModel.exportXlsx(out)
+        advanceUntilIdle()
+
+        assertTrue(fakeXlsxUseCase.wasCalled)
+        assertFalse(viewModel.uiState.value.isExporting)
+        assertEquals("Laporan Excel berhasil disimpan.", viewModel.uiState.value.successMessage)
+
+        viewModel.clearSuccessMessage()
+        assertNull(viewModel.uiState.value.successMessage)
+    }
+
+    @Test
+    fun `exportXlsx failure sets errorMessage and clears isExporting`() = runTest(testDispatcher) {
+        val fakeUseCase = FakeGenerateMonthlyReportUseCase(mapOf(YearMonth.now() to dummyReportMay))
+        val fakeXlsxUseCase = FakeExportReportXlsxUseCase(shouldFail = true)
+        val viewModel = MonthlyReportViewModel(
+            fakeUseCase,
+            FakeExportReportPdfUseCase(),
+            fakeXlsxUseCase,
+        )
+        advanceUntilIdle()
+
+        val out = ByteArrayOutputStream()
+        viewModel.exportXlsx(out)
+        advanceUntilIdle()
+
+        assertTrue(fakeXlsxUseCase.wasCalled)
+        assertFalse(viewModel.uiState.value.isExporting)
+        assertEquals("Gagal membuat Excel", viewModel.uiState.value.errorMessage)
     }
 }

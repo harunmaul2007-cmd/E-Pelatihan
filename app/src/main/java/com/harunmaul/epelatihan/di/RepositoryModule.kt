@@ -1,5 +1,6 @@
 package com.harunmaul.epelatihan.di
 
+import com.harunmaul.epelatihan.data.exporter.AndroidReportExporter
 import com.harunmaul.epelatihan.data.platform.AndroidWhatsAppLauncher
 import com.harunmaul.epelatihan.data.repository.DefaultAppInfoRepository
 import com.harunmaul.epelatihan.data.repository.DefaultAppSettingsRepository
@@ -10,6 +11,7 @@ import com.harunmaul.epelatihan.data.repository.DefaultRegistrationRepository
 import com.harunmaul.epelatihan.data.repository.DefaultTrainingRepository
 import com.harunmaul.epelatihan.data.repository.DefaultUserRepository
 import com.harunmaul.epelatihan.data.repository.DefaultWhatsAppLogRepository
+import com.harunmaul.epelatihan.domain.exporter.ReportExporter
 import com.harunmaul.epelatihan.domain.repository.AppInfoRepository
 import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuditLogRepository
@@ -88,4 +90,10 @@ abstract class RepositoryModule {
     abstract fun bindWhatsAppLauncher(
         implementation: AndroidWhatsAppLauncher,
     ): WhatsAppLauncher
+
+    @Binds
+    @Singleton
+    abstract fun bindReportExporter(
+        implementation: AndroidReportExporter,
+    ): ReportExporter
 }

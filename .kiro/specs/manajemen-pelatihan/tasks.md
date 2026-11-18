@@ -122,7 +122,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Tangani loading, data kosong, error, dan pembaruan data cloud.
   - **Mencakup:** REQ-09, REQ-11.
 
-- [ ] 14. Implementasikan ekspor PDF dan Excel/XLSX
+- [x] 14. Implementasikan ekspor PDF dan Excel/XLSX
   - Bentuk dokumen PDF dari filter dan hasil laporan aktif.
   - Bentuk workbook XLSX dengan sheet ringkasan dan rincian per pelatihan.
   - Gunakan Android Storage Access Framework agar pengguna memilih lokasi file.

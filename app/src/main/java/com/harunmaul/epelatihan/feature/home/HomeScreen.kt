@@ -56,6 +56,7 @@ import com.harunmaul.epelatihan.domain.model.UserRole
 fun HomeRoute(
     onNavigateToUserManagement: () -> Unit = {},
     onNavigateToTrainings: () -> Unit = {},
+    onNavigateToParticipants: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,6 +94,7 @@ fun HomeRoute(
         onLogoutClick = { showLogoutDialog = true },
         onNavigateToUserManagement = onNavigateToUserManagement,
         onNavigateToTrainings = onNavigateToTrainings,
+        onNavigateToParticipants = onNavigateToParticipants,
     )
 }
 
@@ -103,6 +105,7 @@ private fun HomeScreen(
     onLogoutClick: () -> Unit,
     onNavigateToUserManagement: () -> Unit = {},
     onNavigateToTrainings: () -> Unit = {},
+    onNavigateToParticipants: () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
@@ -246,7 +249,10 @@ private fun HomeScreen(
                             labelRes = R.string.feature_training,
                             onClick = onNavigateToTrainings,
                         )
-                        FeatureChip(R.string.feature_participant)
+                        FeatureChip(
+                            labelRes = R.string.feature_participant,
+                            onClick = onNavigateToParticipants,
+                        )
                         FeatureChip(R.string.feature_report)
                         FeatureChip(R.string.feature_settings)
                         if (uiState.currentUser?.role == UserRole.ADMIN) {

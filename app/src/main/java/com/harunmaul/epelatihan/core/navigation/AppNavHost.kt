@@ -30,6 +30,9 @@ import com.harunmaul.epelatihan.feature.auth.bootstrap.BootstrapAdminRoute
 import com.harunmaul.epelatihan.feature.auth.forgotpassword.ForgotPasswordRoute
 import com.harunmaul.epelatihan.feature.auth.login.LoginRoute
 import com.harunmaul.epelatihan.feature.home.HomeRoute
+import com.harunmaul.epelatihan.feature.participant.detail.ParticipantDetailRoute
+import com.harunmaul.epelatihan.feature.participant.form.ParticipantFormRoute
+import com.harunmaul.epelatihan.feature.participant.list.ParticipantListRoute
 import com.harunmaul.epelatihan.feature.training.detail.TrainingDetailRoute
 import com.harunmaul.epelatihan.feature.training.form.TrainingFormRoute
 import com.harunmaul.epelatihan.feature.training.list.TrainingListRoute
@@ -62,6 +65,15 @@ data class TrainingDetailDestination(val trainingId: String)
 
 @Serializable
 data class TrainingFormDestination(val trainingId: String? = null)
+
+@Serializable
+data object ParticipantListDestination
+
+@Serializable
+data class ParticipantDetailDestination(val participantId: String)
+
+@Serializable
+data class ParticipantFormDestination(val participantId: String? = null, val initialPhone: String? = null)
 
 @Composable
 fun AppNavHost(
@@ -131,6 +143,9 @@ fun AppNavHost(
                 onNavigateToTrainings = {
                     navController.navigate(TrainingListDestination)
                 },
+                onNavigateToParticipants = {
+                    navController.navigate(ParticipantListDestination)
+                },
             )
         }
 
@@ -169,6 +184,42 @@ fun AppNavHost(
 
         composable<TrainingFormDestination> {
             TrainingFormRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        composable<ParticipantListDestination> {
+            ParticipantListRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToDetail = { participantId ->
+                    navController.navigate(ParticipantDetailDestination(participantId))
+                },
+                onNavigateToCreate = {
+                    navController.navigate(ParticipantFormDestination())
+                },
+            )
+        }
+
+        composable<ParticipantDetailDestination> {
+            ParticipantDetailRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToEdit = { participantId ->
+                    navController.navigate(ParticipantFormDestination(participantId = participantId))
+                },
+            )
+        }
+
+        composable<ParticipantFormDestination> {
+            ParticipantFormRoute(
                 onNavigateBack = {
                     navController.popBackStack()
                 },

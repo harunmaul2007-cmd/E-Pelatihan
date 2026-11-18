@@ -74,7 +74,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Simpan metadata pembuat dan pengubah serta audit perubahan.
   - **Mencakup:** REQ-03, REQ-04, REQ-12.
 
-- [ ] 9. Implementasikan data peserta dan integrasi kontak Android
+- [x] 9. Implementasikan data peserta dan integrasi kontak Android
   - Buat daftar dan detail peserta.
   - Buat input peserta manual untuk nama, nomor WhatsApp, email opsional, dan catatan.
   - Integrasikan pemilih kontak Android dan ambil hanya kontak yang dipilih.
@@ -83,7 +83,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Batasi perubahan dan pengarsipan data tersimpan hanya untuk Admin.
   - **Mencakup:** REQ-05, REQ-12.
 
-- [ ] 10. Implementasikan pendaftaran peserta dan pemilihan harga manual
+- [x] 10. Implementasikan pendaftaran peserta dan pemilihan harga manual
   - Buat daftar pendaftaran pada detail pelatihan.
   - Sediakan pemilihan peserta yang sudah ada atau pembuatan peserta baru.
   - Cegah peserta yang sama didaftarkan dua kali ke pelatihan yang sama.

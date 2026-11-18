@@ -20,3 +20,13 @@ class NetworkException(
     message: String = "Koneksi internet bermasalah. Periksa koneksi Anda.",
     cause: Throwable? = null,
 ) : AppException(message, cause)
+
+class DuplicateParticipantPhoneException(
+    message: String = "Nomor WhatsApp sudah terdaftar untuk peserta lain.",
+    cause: Throwable? = null,
+) : AppException(message, cause)
+
+class DuplicateRegistrationException(
+    message: String = "Peserta sudah terdaftar pada pelatihan ini.",
+    cause: Throwable? = null,
+) : AppException(message, cause)

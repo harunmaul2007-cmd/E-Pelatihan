@@ -36,6 +36,10 @@
     <string name="logout_confirmation_message">Apakah Anda yakin ingin keluar dari akun ini?</string>
     <string name="confirm_logout">Keluar</string>
     <string name="cancel">Batal</string>
+    <string name="save">Simpan</string>
+    <string name="schedule">Jadwal &amp; Waktu</string>
+    <string name="timezone_label">Zona Waktu: %1$s</string>
+    <string name="speaker">Pemateri</string>
     <string name="logged_in_as">Masuk sebagai:</string>
     <string name="role_label">Peran: %1$s</string>
 
@@ -163,4 +167,66 @@
     <string name="training_saved_success">Pelatihan berhasil disimpan.</string>
     <string name="training_updated_success">Pelatihan berhasil diperbarui.</string>
     <string name="drive_share_reminder">Catatan: Pastikan izin berbagi tautan Google Drive dapat diakses peserta.</string>
+
+    <!-- Participant Feature -->
+    <string name="participants_title">Data Peserta</string>
+    <string name="participants_search_placeholder">Cari nama atau nomor WhatsApp…</string>
+    <string name="add_participant_button">Tambah Peserta</string>
+    <string name="create_participant_title">Tambah Peserta Baru</string>
+    <string name="edit_participant_title">Ubah Data Peserta</string>
+    <string name="participant_detail_title">Detail Peserta</string>
+    <string name="participant_name_label">Nama Peserta</string>
+    <string name="participant_name_placeholder">Masukkan nama lengkap</string>
+    <string name="participant_phone_label">Nomor WhatsApp</string>
+    <string name="participant_phone_placeholder">Contoh: 08123456789 atau +62812…</string>
+    <string name="participant_email_label">Email (Opsional)</string>
+    <string name="participant_email_placeholder">nama@example.com</string>
+    <string name="participant_notes_label">Catatan (Opsional)</string>
+    <string name="participant_notes_placeholder">Instansi, asal kota, atau catatan khusus</string>
+    <string name="pick_from_contacts_button">Pilih dari Kontak HP</string>
+    <string name="participant_active_label">Aktif</string>
+    <string name="participant_inactive_label">Nonaktif / Diarsipkan</string>
+    <string name="show_inactive_participants">Tampilkan peserta nonaktif</string>
+    <string name="archive_participant_button">Arsipkan Peserta</string>
+    <string name="archive_participant_dialog_title">Arsipkan Peserta?</string>
+    <string name="archive_participant_dialog_message">Data peserta ini akan dinonaktifkan. Data riwayat pendaftaran sebelumnya tetap aman.</string>
+    <string name="save_participant_button">Simpan Peserta</string>
+    <string name="saving_participant">Menyimpan data peserta…</string>
+    <string name="participant_saved_success">Data peserta berhasil disimpan.</string>
+    <string name="participant_updated_success">Data peserta berhasil diperbarui.</string>
+    <string name="participant_archived_success">Peserta berhasil diarsipkan.</string>
+    <string name="duplicate_participant_title">Nomor Sudah Terdaftar</string>
+    <string name="duplicate_participant_message">Nomor WhatsApp ini sudah terdaftar atas nama %1$s. Apakah Anda ingin menggunakan data peserta tersebut?</string>
+    <string name="use_existing_participant">Gunakan Data Ini</string>
+    <string name="empty_participants_title">Belum ada peserta</string>
+    <string name="empty_participants_description">Tambahkan peserta baru secara manual atau pilih dari kontak HP.</string>
+    <string name="empty_search_participants">Tidak ada peserta yang cocok dengan kata kunci.</string>
+    <string name="participant_created_by">Dibuat pada: %1$s</string>
+    <string name="participant_updated_by">Terakhir diubah: %1$s</string>
+
+    <!-- Registration Feature -->
+    <string name="registrations_section_title">Daftar Pendaftar (%1$d)</string>
+    <string name="register_participant_button">Daftarkan Peserta</string>
+    <string name="register_participant_dialog_title">Pendaftaran Peserta</string>
+    <string name="choose_existing_participant">Pilih Peserta Terdaftar</string>
+    <string name="create_new_participant">Tambah Peserta Baru</string>
+    <string name="select_participant_label">Pilih Peserta</string>
+    <string name="select_participant_placeholder">Pilih peserta yang sudah ada…</string>
+    <string name="pricing_type_label">Pilihan Harga Pelatihan</string>
+    <string name="pricing_early_bird_option">Early Bird — %1$s</string>
+    <string name="pricing_normal_option">Normal — %1$s</string>
+    <string name="pricing_normal_only_notice">Harga Normal: %1$s (Otomatis)</string>
+    <string name="register_submit_button">Daftarkan</string>
+    <string name="registering_participant">Mendaftarkan peserta…</string>
+    <string name="register_success">Peserta berhasil didaftarkan.</string>
+    <string name="edit_pricing_type_dialog_title">Perbaiki Jenis Harga</string>
+    <string name="edit_pricing_type_message">Ubah jenis harga untuk %1$s. Salinan nominal akan diperbarui sesuai master pelatihan.</string>
+    <string name="pricing_updated_success">Jenis harga pendaftaran berhasil diperbarui.</string>
+    <string name="updating_pricing">Memperbarui jenis harga…</string>
+    <string name="empty_registrations_title">Belum ada peserta terdaftar</string>
+    <string name="empty_registrations_description">Daftarkan peserta yang sudah ada atau tambahkan peserta baru.</string>
+    <string name="pricing_badge_early_bird">Early Bird</string>
+    <string name="pricing_badge_normal">Normal</string>
+    <string name="status_unpaid">Belum Bayar</string>
+    <string name="status_paid">Lunas</string>
 </resources>

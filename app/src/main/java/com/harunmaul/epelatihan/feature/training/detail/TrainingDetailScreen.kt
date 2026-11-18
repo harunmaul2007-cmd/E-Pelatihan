@@ -27,10 +27,14 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PriceChange
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.AlertDialog
@@ -72,8 +76,12 @@ import com.harunmaul.epelatihan.R
 import com.harunmaul.epelatihan.core.common.formatDateTime
 import com.harunmaul.epelatihan.core.common.formatSchedule
 import com.harunmaul.epelatihan.core.common.toRupiahString
+import com.harunmaul.epelatihan.core.designsystem.theme.BrandSuccess
 import com.harunmaul.epelatihan.domain.model.MeetingMethod
+import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.PricingScheme
+import com.harunmaul.epelatihan.domain.model.PricingType
+import com.harunmaul.epelatihan.domain.model.RegistrationWithParticipant
 import com.harunmaul.epelatihan.domain.model.Training
 import com.harunmaul.epelatihan.domain.model.TrainingLifecycle
 import com.harunmaul.epelatihan.domain.model.UserRole
@@ -104,12 +112,26 @@ fun TrainingDetailRoute(
         }
     }
 
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearSuccessMessage()
+        }
+    }
+
     TrainingDetailScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onEditClick = { uiState.training?.id?.let(onNavigateToEdit) },
         onArchiveClick = viewModel::archiveTraining,
+        onOpenRegisterDialog = viewModel::openRegisterDialog,
+        onDismissRegisterDialog = viewModel::dismissRegisterDialog,
+        onRegisterExisting = viewModel::registerExistingParticipant,
+        onRegisterNew = viewModel::registerNewParticipant,
+        onOpenEditPriceDialog = viewModel::openEditPriceDialog,
+        onDismissEditPriceDialog = viewModel::dismissEditPriceDialog,
+        onUpdateRegistrationPrice = viewModel::updateRegistrationPrice,
     )
 }
 
@@ -121,6 +143,19 @@ fun TrainingDetailScreen(
     onNavigateBack: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onArchiveClick: () -> Unit = {},
+    onOpenRegisterDialog: () -> Unit = {},
+    onDismissRegisterDialog: () -> Unit = {},
+    onRegisterExisting: (participantId: String, pricingType: PricingType?) -> Unit = { _, _ -> },
+    onRegisterNew: (
+        name: String,
+        phoneRaw: String,
+        email: String?,
+        notes: String?,
+        pricingType: PricingType?,
+    ) -> Unit = { _, _, _, _, _ -> },
+    onOpenEditPriceDialog: (RegistrationWithParticipant) -> Unit = {},
+    onDismissEditPriceDialog: () -> Unit = {},
+    onUpdateRegistrationPrice: (PricingType) -> Unit = {},
 ) {
     val context = LocalContext.current
     var showArchiveDialog by remember { mutableStateOf(false) }
@@ -150,6 +185,27 @@ fun TrainingDetailScreen(
         )
     }
 
+    if (uiState.showRegisterDialog && uiState.training != null) {
+        RegisterParticipantDialog(
+            training = uiState.training,
+            availableParticipants = uiState.availableParticipants,
+            isRegistering = uiState.isRegistering,
+            onDismissRequest = onDismissRegisterDialog,
+            onRegisterExisting = onRegisterExisting,
+            onRegisterNew = onRegisterNew,
+        )
+    }
+
+    if (uiState.showEditPriceDialog && uiState.training != null && uiState.selectedRegistrationForEdit != null) {
+        EditRegistrationPriceDialog(
+            training = uiState.training,
+            registrationWithParticipant = uiState.selectedRegistrationForEdit,
+            isUpdating = uiState.isUpdatingPrice,
+            onDismissRequest = onDismissEditPriceDialog,
+            onConfirm = onUpdateRegistrationPrice,
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -169,22 +225,12 @@ fun TrainingDetailScreen(
                     }
                 },
                 actions = {
-                    // Tombol cepat Ubah dan Arsip di TopBar jika Admin
-                    if (uiState.currentUserRole == UserRole.ADMIN && uiState.training != null) {
+                    if (uiState.currentUserRole == UserRole.ADMIN && uiState.training?.lifecycle == TrainingLifecycle.ACTIVE) {
                         IconButton(onClick = onEditClick) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = stringResource(R.string.action_edit),
                             )
-                        }
-                        if (uiState.training.lifecycle == TrainingLifecycle.ACTIVE) {
-                            IconButton(onClick = { showArchiveDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Archive,
-                                    contentDescription = stringResource(R.string.action_archive),
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
                         }
                     }
                 },
@@ -197,32 +243,20 @@ fun TrainingDetailScreen(
                 .padding(contentPadding),
         ) {
             when {
-                uiState.isLoading && uiState.training == null -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.loading_trainings),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
                 uiState.training == null -> {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .align(Alignment.Center)
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
                     ) {
                         Text(
                             text = stringResource(R.string.training_not_found),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -234,29 +268,27 @@ fun TrainingDetailScreen(
 
                 else -> {
                     val training = uiState.training
-                    val scrollState = rememberScrollState()
+                    val status = TrainingStatusResolver.resolve(training)
 
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(scrollState),
+                            .verticalScroll(rememberScrollState()),
                     ) {
-                        // Banner offline
+                        // Offline notice
                         AnimatedVisibility(visible = uiState.isFromCache) {
                             Surface(
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
                                 modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
                             ) {
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.CloudOff,
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(16.dp),
                                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -270,30 +302,52 @@ fun TrainingDetailScreen(
                         }
 
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         ) {
-                            // Header: Status Badge & Nama Pelatihan
-                            TrainingStatusBadge(status = TrainingStatusResolver.resolve(training))
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = training.name,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            // Header Nama & Status
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                Text(
+                                    text = training.name,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TrainingStatusBadge(status = status)
+                            }
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                            // Deskripsi
+                            val description = training.description
+                            if (!description.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = description,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
 
-                            // Kartu Jadwal & Waktu
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Kartu Jadwal
                             DetailSectionCard(
                                 icon = Icons.Default.Event,
-                                title = stringResource(R.string.training_schedule),
+                                title = stringResource(R.string.schedule),
                             ) {
                                 Text(
                                     text = formatSchedule(training.startAt, training.endAt, training.timeZoneId),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.timezone_label, training.timeZoneId),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
 
@@ -302,54 +356,40 @@ fun TrainingDetailScreen(
                             // Kartu Pemateri
                             DetailSectionCard(
                                 icon = Icons.Default.Person,
-                                title = stringResource(R.string.training_speaker),
+                                title = stringResource(R.string.speaker),
                             ) {
                                 Text(
                                     text = training.speaker,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
                                 )
-                            }
-
-                            // Kartu Deskripsi (jika diisi)
-                            if (!training.description.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                DetailSectionCard(
-                                    icon = Icons.Default.Description,
-                                    title = stringResource(R.string.training_description),
-                                ) {
-                                    Text(
-                                        text = training.description,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Kartu Pelaksanaan & Akses (Zoom / Lokasi / Link Rekaman / Materi)
+                            // Kartu Metode & Lokasi/Link
                             DetailSectionCard(
                                 icon = if (training.meetingMethod == MeetingMethod.ONLINE) {
                                     Icons.Default.Videocam
                                 } else {
                                     Icons.Default.LocationOn
                                 },
-                                title = stringResource(R.string.training_method),
+                                title = if (training.meetingMethod == MeetingMethod.ONLINE) {
+                                    stringResource(R.string.method_online)
+                                } else {
+                                    stringResource(R.string.method_offline)
+                                },
                             ) {
-                                Text(
-                                    text = if (training.meetingMethod == MeetingMethod.ONLINE) {
-                                        stringResource(R.string.method_online)
-                                    } else {
-                                        stringResource(R.string.method_offline)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-
-                                if (training.meetingMethod == MeetingMethod.ONLINE && !training.zoomUrl.isNullOrBlank()) {
+                                val zoomUrl = training.zoomUrl
+                                if (training.meetingMethod == MeetingMethod.ONLINE && !zoomUrl.isNullOrBlank()) {
+                                    Text(
+                                        text = zoomUrl,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     FilledTonalButton(
-                                        onClick = { openUrl(context, training.zoomUrl) },
+                                        onClick = { openUrl(context, zoomUrl) },
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
@@ -358,20 +398,22 @@ fun TrainingDetailScreen(
                                     }
                                 }
 
-                                if (training.meetingMethod == MeetingMethod.OFFLINE && !training.location.isNullOrBlank()) {
+                                val location = training.location
+                                if (training.meetingMethod == MeetingMethod.OFFLINE && !location.isNullOrBlank()) {
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        text = training.location,
+                                        text = location,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
 
                                 // Link Materi / PDF
-                                if (!training.materialUrl.isNullOrBlank()) {
+                                val materialUrl = training.materialUrl
+                                if (!materialUrl.isNullOrBlank()) {
                                     Spacer(modifier = Modifier.height(10.dp))
                                     OutlinedButton(
-                                        onClick = { openUrl(context, training.materialUrl) },
+                                        onClick = { openUrl(context, materialUrl) },
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
                                         Icon(Icons.Default.Description, contentDescription = null)
@@ -381,10 +423,11 @@ fun TrainingDetailScreen(
                                 }
 
                                 // Link Rekaman
-                                if (!training.recordingUrl.isNullOrBlank()) {
+                                val recordingUrl = training.recordingUrl
+                                if (!recordingUrl.isNullOrBlank()) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     OutlinedButton(
-                                        onClick = { openUrl(context, training.recordingUrl) },
+                                        onClick = { openUrl(context, recordingUrl) },
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
                                         Icon(Icons.Default.VideoLibrary, contentDescription = null)
@@ -440,6 +483,64 @@ fun TrainingDetailScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
                                     )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // SECTION PENDAFTARAN PESERTA
+                            DetailSectionCard(
+                                icon = Icons.Default.Group,
+                                title = stringResource(R.string.registrations_section_title, uiState.registrations.size),
+                            ) {
+                                Button(
+                                    onClick = onOpenRegisterDialog,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PersonAdd,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.register_participant_button))
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                if (uiState.registrations.isEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = stringResource(R.string.empty_registrations_title),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = stringResource(R.string.empty_registrations_description),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center,
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        uiState.registrations.forEach { item ->
+                                            RegistrationItemCard(
+                                                item = item,
+                                                isAdmin = uiState.currentUserRole == UserRole.ADMIN,
+                                                onEditPriceClick = { onOpenEditPriceDialog(item) },
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
@@ -505,6 +606,119 @@ fun TrainingDetailScreen(
                             Spacer(modifier = Modifier.height(32.dp))
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RegistrationItemCard(
+    item: RegistrationWithParticipant,
+    isAdmin: Boolean,
+    onEditPriceClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = item.participant?.name ?: "Peserta",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+
+                if (isAdmin) {
+                    IconButton(
+                        onClick = onEditPriceClick,
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PriceChange,
+                            contentDescription = stringResource(R.string.edit_pricing_type_dialog_title),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+
+            if (item.participant != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Phone,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = item.participant.phoneDisplay,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Pricing badge
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (item.registration.pricingType == PricingType.EARLY_BIRD) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                ) {
+                    Text(
+                        text = "${item.registration.pricingType.name}: ${item.registration.priceAmount.toRupiahString()}",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                // Payment Status badge
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
+                        BrandSuccess.copy(alpha = 0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    },
+                ) {
+                    Text(
+                        text = if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
+                            stringResource(R.string.status_paid)
+                        } else {
+                            stringResource(R.string.status_unpaid)
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
+                            BrandSuccess
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        },
+                    )
                 }
             }
         }

@@ -4,12 +4,16 @@ import com.harunmaul.epelatihan.data.repository.DefaultAppInfoRepository
 import com.harunmaul.epelatihan.data.repository.DefaultAppSettingsRepository
 import com.harunmaul.epelatihan.data.repository.DefaultAuditLogRepository
 import com.harunmaul.epelatihan.data.repository.DefaultAuthRepository
+import com.harunmaul.epelatihan.data.repository.DefaultParticipantRepository
+import com.harunmaul.epelatihan.data.repository.DefaultRegistrationRepository
 import com.harunmaul.epelatihan.data.repository.DefaultTrainingRepository
 import com.harunmaul.epelatihan.data.repository.DefaultUserRepository
 import com.harunmaul.epelatihan.domain.repository.AppInfoRepository
 import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuditLogRepository
 import com.harunmaul.epelatihan.domain.repository.AuthRepository
+import com.harunmaul.epelatihan.domain.repository.ParticipantRepository
+import com.harunmaul.epelatihan.domain.repository.RegistrationRepository
 import com.harunmaul.epelatihan.domain.repository.TrainingRepository
 import com.harunmaul.epelatihan.domain.repository.UserRepository
 import dagger.Binds
@@ -56,4 +60,16 @@ abstract class RepositoryModule {
     abstract fun bindTrainingRepository(
         implementation: DefaultTrainingRepository,
     ): TrainingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindParticipantRepository(
+        implementation: DefaultParticipantRepository,
+    ): ParticipantRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRegistrationRepository(
+        implementation: DefaultRegistrationRepository,
+    ): RegistrationRepository
 }

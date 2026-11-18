@@ -8,7 +8,7 @@ import javax.inject.Singleton
 
 @Singleton
 class FirebaseReferences @Inject constructor(
-    firestore: FirebaseFirestore,
+    val firestore: FirebaseFirestore,
 ) {
     val appSettings: DocumentReference = firestore.appSettingsDocument()
     val users: CollectionReference = firestore.collection(FirestoreCollections.USERS)

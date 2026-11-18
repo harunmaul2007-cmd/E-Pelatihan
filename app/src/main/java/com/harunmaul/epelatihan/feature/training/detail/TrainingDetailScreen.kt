@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Description
@@ -138,6 +139,7 @@ fun TrainingDetailRoute(
         onUpdatePaymentStatus = viewModel::updatePaymentStatus,
         onOpenRegistrationDetailDialog = viewModel::openRegistrationDetailDialog,
         onDismissRegistrationDetailDialog = viewModel::dismissRegistrationDetailDialog,
+        onOpenWhatsApp = viewModel::openWhatsApp,
     )
 }
 
@@ -167,6 +169,7 @@ fun TrainingDetailScreen(
     onUpdatePaymentStatus: (PaymentStatus) -> Unit = {},
     onOpenRegistrationDetailDialog: (RegistrationWithParticipant) -> Unit = {},
     onDismissRegistrationDetailDialog: () -> Unit = {},
+    onOpenWhatsApp: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     var showArchiveDialog by remember { mutableStateOf(false) }
@@ -232,6 +235,9 @@ fun TrainingDetailScreen(
             training = uiState.training,
             isAdmin = uiState.currentUserRole == UserRole.ADMIN,
             onDismissRequest = onDismissRegistrationDetailDialog,
+            onOpenWhatsAppClick = {
+                onOpenWhatsApp(uiState.selectedRegistrationForDetail.registration.id)
+            },
             onChangePaymentStatusClick = {
                 onOpenPaymentStatusDialog(uiState.selectedRegistrationForDetail)
             },
@@ -573,6 +579,7 @@ fun TrainingDetailScreen(
                                                 item = item,
                                                 isAdmin = uiState.currentUserRole == UserRole.ADMIN,
                                                 onClick = { onOpenRegistrationDetailDialog(item) },
+                                                onOpenWhatsAppClick = { onOpenWhatsApp(item.registration.id) },
                                                 onEditPriceClick = { onOpenEditPriceDialog(item) },
                                                 onChangePaymentStatusClick = { onOpenPaymentStatusDialog(item) },
                                             )
@@ -654,6 +661,7 @@ private fun RegistrationItemCard(
     item: RegistrationWithParticipant,
     isAdmin: Boolean,
     onClick: () -> Unit,
+    onOpenWhatsAppClick: () -> Unit,
     onEditPriceClick: () -> Unit,
     onChangePaymentStatusClick: () -> Unit,
 ) {
@@ -679,8 +687,22 @@ private fun RegistrationItemCard(
                     modifier = Modifier.weight(1f),
                 )
 
-                if (isAdmin) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
+                        IconButton(
+                            onClick = onOpenWhatsAppClick,
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = stringResource(R.string.open_whatsapp_button),
+                                tint = BrandSuccess,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+
+                    if (isAdmin) {
                         IconButton(
                             onClick = onChangePaymentStatusClick,
                             modifier = Modifier.size(32.dp),

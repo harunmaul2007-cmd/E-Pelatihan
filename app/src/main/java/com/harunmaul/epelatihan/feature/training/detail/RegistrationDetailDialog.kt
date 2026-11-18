@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
@@ -50,6 +51,7 @@ fun RegistrationDetailDialog(
     training: Training,
     isAdmin: Boolean,
     onDismissRequest: () -> Unit,
+    onOpenWhatsAppClick: () -> Unit,
     onChangePaymentStatusClick: () -> Unit,
     onEditPriceClick: () -> Unit,
 ) {
@@ -241,6 +243,36 @@ fun RegistrationDetailDialog(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = stringResource(R.string.registered_at_label, createdAt.formatDateTime(training.timeZoneId)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                // WhatsApp Section (Hanya untuk peserta Lunas)
+                if (registration.paymentStatus == PaymentStatus.LUNAS) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    OutlinedButton(
+                        onClick = onOpenWhatsAppClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = BrandSuccess,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.open_whatsapp_button),
+                            color = BrandSuccess,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = stringResource(R.string.whatsapp_lunas_only_notice),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

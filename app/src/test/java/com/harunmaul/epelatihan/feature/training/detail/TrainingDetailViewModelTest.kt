@@ -17,20 +17,27 @@ import com.harunmaul.epelatihan.domain.model.RegistrationWithParticipant
 import com.harunmaul.epelatihan.domain.model.Training
 import com.harunmaul.epelatihan.domain.model.TrainingDetailSnapshot
 import com.harunmaul.epelatihan.domain.model.TrainingLifecycle
+import com.harunmaul.epelatihan.domain.model.AppSettings
 import com.harunmaul.epelatihan.domain.model.TrainingListSnapshot
 import com.harunmaul.epelatihan.domain.model.UserProfile
 import com.harunmaul.epelatihan.domain.model.UserRole
 import com.harunmaul.epelatihan.domain.model.UserSession
+import com.harunmaul.epelatihan.domain.model.WhatsAppOpenLog
+import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuthRepository
 import com.harunmaul.epelatihan.domain.repository.ParticipantRepository
 import com.harunmaul.epelatihan.domain.repository.RegistrationRepository
 import com.harunmaul.epelatihan.domain.repository.TrainingRepository
+import com.harunmaul.epelatihan.domain.repository.WhatsAppLauncher
+import com.harunmaul.epelatihan.domain.repository.WhatsAppLogRepository
 import com.harunmaul.epelatihan.domain.usecase.ArchiveTrainingUseCase
+import com.harunmaul.epelatihan.domain.usecase.BuildWhatsAppMessageUseCase
 import com.harunmaul.epelatihan.domain.usecase.CreateParticipantUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveParticipantsUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveSessionUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingDetailUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingRegistrationsUseCase
+import com.harunmaul.epelatihan.domain.usecase.OpenWhatsAppUseCase
 import com.harunmaul.epelatihan.domain.usecase.RegisterParticipantUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdatePaymentStatusUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdateRegistrationPriceUseCase
@@ -241,6 +248,25 @@ class TrainingDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private class FakeAppSettingsRepo : AppSettingsRepository {
+        override fun observeAppSettings(): Flow<AppSettings> = flowOf(AppSettings("E-Pelatihan", 1, null, null))
+        override suspend fun getAppSettings(): AppSettings = AppSettings("E-Pelatihan", 1, null, null)
+    }
+
+    private class FakeWhatsAppLauncher : WhatsAppLauncher {
+        var opened = false
+        override fun openWhatsApp(phoneNormalized: String, message: String): AppResult<Unit> {
+            opened = true
+            return AppResult.Success(Unit)
+        }
+    }
+
+    private class FakeWhatsAppLogRepo : WhatsAppLogRepository {
+        override suspend fun recordOpenLog(actorId: String, registrationId: String, recipientPhone: String, messageSnapshot: String): AppResult<WhatsAppOpenLog> =
+            AppResult.Success(WhatsAppOpenLog("1", registrationId, recipientPhone, messageSnapshot, actorId, Instant.now()))
+        override fun observeLogsByRegistration(registrationId: String): Flow<List<WhatsAppOpenLog>> = flowOf(emptyList())
+    }
+
     private fun createViewModel(
         trainingRepo: TrainingRepository,
         authRepo: AuthRepository,
@@ -255,6 +281,16 @@ class TrainingDetailViewModelTest {
         val registerPartUseCase = RegisterParticipantUseCase(regRepo, createPartUseCase, authRepo)
         val updateRegPriceUseCase = UpdateRegistrationPriceUseCase(regRepo, trainingRepo, authRepo)
         val updatePaymentStatusUseCase = UpdatePaymentStatusUseCase(regRepo, authRepo)
+        val openWhatsAppUseCase = OpenWhatsAppUseCase(
+            registrationRepository = regRepo,
+            participantRepository = partRepo,
+            trainingRepository = trainingRepo,
+            appSettingsRepository = FakeAppSettingsRepo(),
+            authRepository = authRepo,
+            buildWhatsAppMessageUseCase = BuildWhatsAppMessageUseCase(),
+            whatsAppLauncher = FakeWhatsAppLauncher(),
+            whatsAppLogRepository = FakeWhatsAppLogRepo(),
+        )
         val sessionUseCase = ObserveSessionUseCase(authRepo)
         val savedStateHandle = SavedStateHandle(mapOf("trainingId" to "t-100"))
 
@@ -267,6 +303,7 @@ class TrainingDetailViewModelTest {
             registerParticipantUseCase = registerPartUseCase,
             updateRegistrationPriceUseCase = updateRegPriceUseCase,
             updatePaymentStatusUseCase = updatePaymentStatusUseCase,
+            openWhatsAppUseCase = openWhatsAppUseCase,
             observeSessionUseCase = sessionUseCase,
         )
     }
@@ -513,5 +550,36 @@ class TrainingDetailViewModelTest {
         viewModel.dismissRegistrationDetailDialog()
         assertFalse(viewModel.uiState.value.showRegistrationDetailDialog)
         assertEquals(null, viewModel.uiState.value.selectedRegistrationForDetail)
+    }
+
+    @Test
+    fun `opening whatsapp for paid registration updates success message`() = runTest {
+        val paidReg = Registration(
+            id = "reg-100",
+            trainingId = "t-100",
+            participantId = "p-1",
+            pricingType = PricingType.NORMAL,
+            priceAmount = 500000L,
+            paymentStatus = PaymentStatus.LUNAS,
+            paidAt = Instant.now(),
+            paidBy = "admin-1",
+            createdBy = "admin-1",
+            createdAt = Instant.now(),
+            updatedBy = "admin-1",
+            updatedAt = Instant.now(),
+        )
+        val trainingRepo = FakeTrainingRepo(sampleTraining)
+        val authRepo = FakeAuthRepo(userProfile)
+        val regRepo = FakeRegistrationRepo(listOf(paidReg))
+        val partRepo = FakeParticipantRepo(listOf(sampleParticipant))
+
+        val viewModel = createViewModel(trainingRepo, authRepo, regRepo, partRepo)
+        advanceUntilIdle()
+
+        viewModel.openWhatsApp("reg-100")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Membuka WhatsApp… Periksa pesan dan tekan kirim di WhatsApp.", state.successMessage)
     }
 }

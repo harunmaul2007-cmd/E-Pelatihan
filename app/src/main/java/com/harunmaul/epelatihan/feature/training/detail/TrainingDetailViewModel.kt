@@ -18,6 +18,7 @@ import com.harunmaul.epelatihan.domain.usecase.ObserveParticipantsUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveSessionUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingDetailUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingRegistrationsUseCase
+import com.harunmaul.epelatihan.domain.usecase.OpenWhatsAppUseCase
 import com.harunmaul.epelatihan.domain.usecase.RegisterParticipantUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdatePaymentStatusUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdateRegistrationPriceUseCase
@@ -63,6 +64,7 @@ class TrainingDetailViewModel @Inject constructor(
     private val registerParticipantUseCase: RegisterParticipantUseCase,
     private val updateRegistrationPriceUseCase: UpdateRegistrationPriceUseCase,
     private val updatePaymentStatusUseCase: UpdatePaymentStatusUseCase,
+    private val openWhatsAppUseCase: OpenWhatsAppUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
 ) : ViewModel() {
 
@@ -360,6 +362,24 @@ class TrainingDetailViewModel @Inject constructor(
                             isUpdatingPaymentStatus = false,
                             errorMessage = result.cause.message ?: "Gagal mengubah status pembayaran.",
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    fun openWhatsApp(registrationId: String) {
+        viewModelScope.launch {
+            val result = openWhatsAppUseCase(registrationId)
+            when (result) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(successMessage = "Membuka WhatsApp… Periksa pesan dan tekan kirim di WhatsApp.")
+                    }
+                }
+                is AppResult.Failure -> {
+                    _uiState.update {
+                        it.copy(errorMessage = result.cause.message ?: "Gagal membuka WhatsApp.")
                     }
                 }
             }

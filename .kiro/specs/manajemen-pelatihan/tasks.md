@@ -103,7 +103,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Catat nilai sebelum dan sesudah pada audit log.
   - **Mencakup:** REQ-07, REQ-12.
 
-- [ ] 12. Implementasikan pesan WhatsApp manual
+- [x] 12. Implementasikan pesan WhatsApp manual
   - Buat pembentuk pesan dari peserta, pelatihan, jadwal, metode, serta link yang tersedia.
   - Aktifkan aksi hanya untuk peserta berstatus `LUNAS`.
   - Buka WhatsApp ke nomor yang sudah dinormalisasi dengan teks yang sudah terisi.

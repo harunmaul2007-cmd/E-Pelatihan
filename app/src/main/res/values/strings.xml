@@ -244,5 +244,9 @@
     <string name="paid_by_label">Dicatat Oleh: %1$s</string>
     <string name="registered_at_label">Waktu Pendaftaran: %1$s</string>
     <string name="change_payment_status">Ubah Status Pembayaran</string>
+    <string name="open_whatsapp_button">Buka WhatsApp</string>
+    <string name="whatsapp_opened_notice">Membuka WhatsApp… Periksa pesan dan tekan kirim di WhatsApp.</string>
+    <string name="whatsapp_lunas_only_notice">WhatsApp hanya tersedia untuk peserta berstatus LUNAS.</string>
+    <string name="whatsapp_unavailable">WhatsApp tidak dapat dibuka pada perangkat ini.</string>
     <string name="close">Tutup</string>
 </resources>

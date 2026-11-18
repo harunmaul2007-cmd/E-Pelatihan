@@ -42,6 +42,7 @@ android {
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
             buildConfigField("String", "ENVIRONMENT", "\"production\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

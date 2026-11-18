@@ -182,6 +182,8 @@ class OpenWhatsAppUseCaseTest {
             flowOf(AppSettings("Komunitas E-Pelatihan", 1, null, null))
         override suspend fun getAppSettings(): AppSettings =
             AppSettings("Komunitas E-Pelatihan", 1, null, null)
+        override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> =
+            error("Not needed")
     }
 
     private class FakeWhatsAppLauncher(var shouldSucceed: Boolean = true) : WhatsAppLauncher {

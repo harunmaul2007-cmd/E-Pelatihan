@@ -71,6 +71,8 @@ class ExportReportXlsxUseCaseTest {
         )
         override suspend fun getAppSettings(): AppSettings =
             AppSettings(communityName, 1, "admin-1", Instant.now())
+        override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> =
+            error("Not needed")
     }
 
     private class FakeReportExporter : ReportExporter {

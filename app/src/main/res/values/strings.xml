@@ -275,4 +275,16 @@
     <string name="exporting_progress">Mengekspor laporan…</string>
     <string name="export_menu_title">Pilih Format Ekspor</string>
     <string name="loading_report">Memuat laporan bulanan…</string>
+
+    <!-- Settings Feature -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_community_name_label">Nama Komunitas</string>
+    <string name="settings_community_name_placeholder">Masukkan nama komunitas</string>
+    <string name="settings_community_name_helper">Nama komunitas tampil pada layar login dan header dokumen laporan (maks. 100 karakter).</string>
+    <string name="settings_logo_section_title">Logo Aplikasi</string>
+    <string name="settings_logo_section_description">Logo aplikasi menggunakan identitas visual resmi E-Pelatihan yang tersimpan secara lokal dan dioptimasi.</string>
+    <string name="settings_save_button">Simpan Pengaturan</string>
+    <string name="settings_save_success">Nama komunitas berhasil diperbarui.</string>
+    <string name="settings_saving_progress">Menyimpan pengaturan…</string>
+    <string name="settings_access_denied">Menu Pengaturan hanya dapat diakses oleh Admin.</string>
 </resources>

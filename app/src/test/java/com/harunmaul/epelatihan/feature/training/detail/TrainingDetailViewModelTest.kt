@@ -251,6 +251,8 @@ class TrainingDetailViewModelTest {
     private class FakeAppSettingsRepo : AppSettingsRepository {
         override fun observeAppSettings(): Flow<AppSettings> = flowOf(AppSettings("E-Pelatihan", 1, null, null))
         override suspend fun getAppSettings(): AppSettings = AppSettings("E-Pelatihan", 1, null, null)
+        override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> =
+            error("Not needed")
     }
 
     private class FakeWhatsAppLauncher : WhatsAppLauncher {

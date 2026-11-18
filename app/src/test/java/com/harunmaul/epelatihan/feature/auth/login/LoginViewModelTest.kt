@@ -81,6 +81,8 @@ class LoginViewModelTest {
             updatedBy = null,
             updatedAt = null,
         )
+        override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> =
+            error("Not needed")
     }
 
     private class FakeUserRepository : UserRepository {

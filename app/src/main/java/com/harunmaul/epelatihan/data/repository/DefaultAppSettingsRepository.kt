@@ -1,10 +1,14 @@
 package com.harunmaul.epelatihan.data.repository
 
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
+import com.harunmaul.epelatihan.core.common.AppResult
 import com.harunmaul.epelatihan.data.firebase.FirebaseReferences
 import com.harunmaul.epelatihan.data.firebase.model.AppSettingsDocument
 import com.harunmaul.epelatihan.data.mapper.toDomain
 import com.harunmaul.epelatihan.domain.model.AppSettings
 import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.channels.awaitClose
@@ -55,6 +59,29 @@ class DefaultAppSettingsRepository @Inject constructor(
             }
         } catch (_: Exception) {
             defaultSettings
+        }
+    }
+
+    override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> {
+        return try {
+            val normalized = communityName.trim()
+            val updates = mapOf(
+                "communityName" to normalized,
+                "schemaVersion" to 1,
+                "updatedBy" to actorId,
+                "updatedAt" to FieldValue.serverTimestamp(),
+            )
+            references.appSettings.set(updates, SetOptions.merge()).await()
+            AppResult.Success(
+                AppSettings(
+                    communityName = normalized,
+                    schemaVersion = 1,
+                    updatedBy = actorId,
+                    updatedAt = Instant.now(),
+                ),
+            )
+        } catch (e: Exception) {
+            AppResult.Failure(e)
         }
     }
 

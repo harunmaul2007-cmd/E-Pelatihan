@@ -34,6 +34,7 @@ import com.harunmaul.epelatihan.feature.participant.detail.ParticipantDetailRout
 import com.harunmaul.epelatihan.feature.participant.form.ParticipantFormRoute
 import com.harunmaul.epelatihan.feature.participant.list.ParticipantListRoute
 import com.harunmaul.epelatihan.feature.report.MonthlyReportRoute
+import com.harunmaul.epelatihan.feature.settings.SettingsRoute
 import com.harunmaul.epelatihan.feature.training.detail.TrainingDetailRoute
 import com.harunmaul.epelatihan.feature.training.form.TrainingFormRoute
 import com.harunmaul.epelatihan.feature.training.list.TrainingListRoute
@@ -78,6 +79,9 @@ data class ParticipantFormDestination(val participantId: String? = null, val ini
 
 @Serializable
 data object MonthlyReportDestination
+
+@Serializable
+data object SettingsDestination
 
 @Composable
 fun AppNavHost(
@@ -152,6 +156,9 @@ fun AppNavHost(
                 },
                 onNavigateToReport = {
                     navController.navigate(MonthlyReportDestination)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(SettingsDestination)
                 },
             )
         }
@@ -243,6 +250,14 @@ fun AppNavHost(
                 },
                 onNavigateToTrainingDetail = { trainingId ->
                     navController.navigate(TrainingDetailDestination(trainingId))
+                },
+            )
+        }
+
+        composable<SettingsDestination> {
+            SettingsRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
                 },
             )
         }

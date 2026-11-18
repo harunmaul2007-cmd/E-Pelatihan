@@ -134,6 +134,8 @@ class MonthlyReportViewModelTest {
     private class DummyAppSettingsRepo : AppSettingsRepository {
         override fun observeAppSettings(): Flow<AppSettings> = flowOf(AppSettings("Komunitas", 1, null, null))
         override suspend fun getAppSettings(): AppSettings = AppSettings("Komunitas", 1, null, null)
+        override suspend fun updateCommunityName(actorId: String, communityName: String): AppResult<AppSettings> =
+            error("Not needed")
     }
 
     private class DummyReportExporter : ReportExporter {

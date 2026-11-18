@@ -131,7 +131,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Tangani pembatalan pemilih file serta kegagalan penulisan.
   - **Mencakup:** REQ-10.
 
-- [ ] 15. Implementasikan menu Pengaturan dan identitas komunitas
+- [x] 15. Implementasikan menu Pengaturan dan identitas komunitas
   - Buat menu Pengaturan yang hanya terlihat dan dapat dibuka oleh Admin.
   - Buat formulir nama komunitas dengan validasi wajib dan maksimal 100 karakter.
   - Simpan nama komunitas dan metadata perubahan pada dokumen `appSettings/general`.
@@ -141,7 +141,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Catat perubahan nama komunitas dalam audit log.
   - **Mencakup:** REQ-11, REQ-12, REQ-13.
 
-- [ ] 16. Lengkapi sinkronisasi, state aplikasi, dan audit
+- [x] 16. Lengkapi sinkronisasi, state aplikasi, dan audit
   - Pastikan semua layar memakai sumber data Firestore yang konsisten.
   - Tangani perubahan data dari perangkat lain dan konflik penulisan secara aman.
   - Tampilkan status proses dan error tanpa menyatakan operasi gagal sebagai sukses.

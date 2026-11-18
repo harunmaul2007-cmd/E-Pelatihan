@@ -20,10 +20,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Singleton
 class DefaultUserRepository @Inject constructor(
@@ -84,16 +87,18 @@ class DefaultUserRepository @Inject constructor(
 
     override suspend fun hasAnyAdmin(): Boolean {
         return try {
-            val appSettingsSnap = references.appSettings.get().await()
-            if (appSettingsSnap.exists() && appSettingsSnap.getBoolean("hasAnyAdmin") == true) {
+            val appSettingsSnap = withTimeoutOrNull(5000) { references.appSettings.get().await() }
+            if (appSettingsSnap != null && appSettingsSnap.exists() && appSettingsSnap.getBoolean("hasAnyAdmin") == true) {
                 return true
             }
-            val snapshot = references.users
-                .whereEqualTo("role", UserRole.ADMIN.name)
-                .limit(1)
-                .get()
-                .await()
-            !snapshot.isEmpty
+            val snapshot = withTimeoutOrNull(5000) {
+                references.users
+                    .whereEqualTo("role", UserRole.ADMIN.name)
+                    .limit(1)
+                    .get()
+                    .await()
+            }
+            snapshot != null && !snapshot.isEmpty
         } catch (_: Exception) {
             false
         }
@@ -105,59 +110,67 @@ class DefaultUserRepository @Inject constructor(
         password: String,
     ): AppResult<UserProfile> {
         return try {
-            if (hasAnyAdmin()) {
-                return AppResult.Failure(
-                    IllegalStateException("Admin pertama sudah terdaftar. Pendaftaran admin dibatasi.")
-                )
-            }
+            withTimeout(20_000) {
+                if (hasAnyAdmin()) {
+                    return@withTimeout AppResult.Failure(
+                        IllegalStateException("Admin pertama sudah terdaftar. Pendaftaran admin dibatasi."),
+                    )
+                }
 
-            val cleanEmail = email.trim()
-            val cleanName = name.trim()
+                val cleanEmail = email.trim()
+                val cleanName = name.trim()
 
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(cleanEmail, password).await()
-            val uid = authResult.user?.uid
-                ?: return AppResult.Failure(AuthenticationException("Gagal membuat akun Admin pertama."))
+                val authResult = firebaseAuth.createUserWithEmailAndPassword(cleanEmail, password).await()
+                val uid = authResult.user?.uid
+                    ?: return@withTimeout AppResult.Failure(AuthenticationException("Gagal membuat akun Admin pertama."))
 
-            val payload = mapOf(
-                "displayName" to cleanName,
-                "email" to cleanEmail,
-                "role" to UserRole.ADMIN.name,
-                "active" to true,
-                "invitationStatus" to InvitationStatus.ACTIVE.name,
-                "createdBy" to uid,
-                "createdAt" to FieldValue.serverTimestamp(),
-                "updatedBy" to uid,
-                "updatedAt" to FieldValue.serverTimestamp(),
-            )
-            references.users.document(uid).set(payload).await()
-
-            // Catat status keberadaan Admin pada appSettings agar dapat diverifikasi aman sebelum login
-            references.appSettings.set(
-                mapOf(
-                    "hasAnyAdmin" to true,
-                    "updatedBy" to uid,
-                    "updatedAt" to FieldValue.serverTimestamp(),
-                ),
-                SetOptions.merge()
-            ).await()
-
-            auditLogRepository.recordLog(
-                actorId = uid,
-                action = "BOOTSTRAP_FIRST_ADMIN",
-                entityType = "USER",
-                entityId = uid,
-                before = emptyMap(),
-                after = mapOf(
+                val payload = mapOf(
                     "displayName" to cleanName,
                     "email" to cleanEmail,
                     "role" to UserRole.ADMIN.name,
                     "active" to true,
+                    "invitationStatus" to InvitationStatus.ACTIVE.name,
+                    "createdBy" to uid,
+                    "createdAt" to FieldValue.serverTimestamp(),
+                    "updatedBy" to uid,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                )
+                references.users.document(uid).set(payload).await()
+
+                // Catat status keberadaan Admin pada appSettings agar dapat diverifikasi aman sebelum login
+                references.appSettings.set(
+                    mapOf(
+                        "hasAnyAdmin" to true,
+                        "updatedBy" to uid,
+                        "updatedAt" to FieldValue.serverTimestamp(),
+                    ),
+                    SetOptions.merge(),
+                ).await()
+
+                auditLogRepository.recordLog(
+                    actorId = uid,
+                    action = "BOOTSTRAP_FIRST_ADMIN",
+                    entityType = "USER",
+                    entityId = uid,
+                    before = emptyMap(),
+                    after = mapOf(
+                        "displayName" to cleanName,
+                        "email" to cleanEmail,
+                        "role" to UserRole.ADMIN.name,
+                        "active" to true,
+                    ),
+                )
+
+                val createdProfile = getUserProfile(uid)
+                    ?: throw IllegalStateException("Profil Admin pertama tidak dapat dimuat.")
+                AppResult.Success(createdProfile)
+            }
+        } catch (_: TimeoutCancellationException) {
+            AppResult.Failure(
+                Exception(
+                    "Koneksi ke Firebase timeout. Pastikan internet aktif, Cloud Firestore sudah dibuat di Firebase Console, dan Email/Password provider sudah diaktifkan.",
                 ),
             )
-
-            val createdProfile = getUserProfile(uid)
-                ?: throw IllegalStateException("Profil Admin pertama tidak dapat dimuat.")
-            AppResult.Success(createdProfile)
         } catch (e: Exception) {
             AppResult.Failure(e)
         }

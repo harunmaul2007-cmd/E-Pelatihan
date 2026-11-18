@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -132,6 +133,11 @@ fun TrainingDetailRoute(
         onOpenEditPriceDialog = viewModel::openEditPriceDialog,
         onDismissEditPriceDialog = viewModel::dismissEditPriceDialog,
         onUpdateRegistrationPrice = viewModel::updateRegistrationPrice,
+        onOpenPaymentStatusDialog = viewModel::openPaymentStatusDialog,
+        onDismissPaymentStatusDialog = viewModel::dismissPaymentStatusDialog,
+        onUpdatePaymentStatus = viewModel::updatePaymentStatus,
+        onOpenRegistrationDetailDialog = viewModel::openRegistrationDetailDialog,
+        onDismissRegistrationDetailDialog = viewModel::dismissRegistrationDetailDialog,
     )
 }
 
@@ -156,6 +162,11 @@ fun TrainingDetailScreen(
     onOpenEditPriceDialog: (RegistrationWithParticipant) -> Unit = {},
     onDismissEditPriceDialog: () -> Unit = {},
     onUpdateRegistrationPrice: (PricingType) -> Unit = {},
+    onOpenPaymentStatusDialog: (RegistrationWithParticipant) -> Unit = {},
+    onDismissPaymentStatusDialog: () -> Unit = {},
+    onUpdatePaymentStatus: (PaymentStatus) -> Unit = {},
+    onOpenRegistrationDetailDialog: (RegistrationWithParticipant) -> Unit = {},
+    onDismissRegistrationDetailDialog: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showArchiveDialog by remember { mutableStateOf(false) }
@@ -203,6 +214,30 @@ fun TrainingDetailScreen(
             isUpdating = uiState.isUpdatingPrice,
             onDismissRequest = onDismissEditPriceDialog,
             onConfirm = onUpdateRegistrationPrice,
+        )
+    }
+
+    if (uiState.showPaymentStatusDialog && uiState.selectedRegistrationForPayment != null) {
+        ConfirmPaymentStatusDialog(
+            item = uiState.selectedRegistrationForPayment,
+            isUpdating = uiState.isUpdatingPaymentStatus,
+            onDismissRequest = onDismissPaymentStatusDialog,
+            onConfirm = onUpdatePaymentStatus,
+        )
+    }
+
+    if (uiState.showRegistrationDetailDialog && uiState.training != null && uiState.selectedRegistrationForDetail != null) {
+        RegistrationDetailDialog(
+            item = uiState.selectedRegistrationForDetail,
+            training = uiState.training,
+            isAdmin = uiState.currentUserRole == UserRole.ADMIN,
+            onDismissRequest = onDismissRegistrationDetailDialog,
+            onChangePaymentStatusClick = {
+                onOpenPaymentStatusDialog(uiState.selectedRegistrationForDetail)
+            },
+            onEditPriceClick = {
+                onOpenEditPriceDialog(uiState.selectedRegistrationForDetail)
+            },
         )
     }
 
@@ -537,7 +572,9 @@ fun TrainingDetailScreen(
                                             RegistrationItemCard(
                                                 item = item,
                                                 isAdmin = uiState.currentUserRole == UserRole.ADMIN,
+                                                onClick = { onOpenRegistrationDetailDialog(item) },
                                                 onEditPriceClick = { onOpenEditPriceDialog(item) },
+                                                onChangePaymentStatusClick = { onOpenPaymentStatusDialog(item) },
                                             )
                                         }
                                     }
@@ -616,10 +653,14 @@ fun TrainingDetailScreen(
 private fun RegistrationItemCard(
     item: RegistrationWithParticipant,
     isAdmin: Boolean,
+    onClick: () -> Unit,
     onEditPriceClick: () -> Unit,
+    onChangePaymentStatusClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -639,16 +680,33 @@ private fun RegistrationItemCard(
                 )
 
                 if (isAdmin) {
-                    IconButton(
-                        onClick = onEditPriceClick,
-                        modifier = Modifier.size(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PriceChange,
-                            contentDescription = stringResource(R.string.edit_pricing_type_dialog_title),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = onChangePaymentStatusClick,
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Payments,
+                                contentDescription = stringResource(R.string.change_payment_status),
+                                tint = if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
+                                    BrandSuccess
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        IconButton(
+                            onClick = onEditPriceClick,
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PriceChange,
+                                contentDescription = stringResource(R.string.edit_pricing_type_dialog_title),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -702,6 +760,11 @@ private fun RegistrationItemCard(
                         BrandSuccess.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.errorContainer
+                    },
+                    modifier = if (isAdmin) {
+                        Modifier.clickable(onClick = onChangePaymentStatusClick)
+                    } else {
+                        Modifier
                     },
                 ) {
                     Text(

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.harunmaul.epelatihan.core.common.AppResult
 import com.harunmaul.epelatihan.core.common.DuplicateRegistrationException
 import com.harunmaul.epelatihan.domain.model.Participant
+import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.PricingType
 import com.harunmaul.epelatihan.domain.model.RegistrationWithParticipant
 import com.harunmaul.epelatihan.domain.model.Training
@@ -18,6 +19,7 @@ import com.harunmaul.epelatihan.domain.usecase.ObserveSessionUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingDetailUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingRegistrationsUseCase
 import com.harunmaul.epelatihan.domain.usecase.RegisterParticipantUseCase
+import com.harunmaul.epelatihan.domain.usecase.UpdatePaymentStatusUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdateRegistrationPriceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -41,9 +43,14 @@ data class TrainingDetailUiState(
     val availableParticipants: List<Participant> = emptyList(),
     val isRegistering: Boolean = false,
     val isUpdatingPrice: Boolean = false,
+    val isUpdatingPaymentStatus: Boolean = false,
     val showRegisterDialog: Boolean = false,
     val showEditPriceDialog: Boolean = false,
     val selectedRegistrationForEdit: RegistrationWithParticipant? = null,
+    val showPaymentStatusDialog: Boolean = false,
+    val selectedRegistrationForPayment: RegistrationWithParticipant? = null,
+    val showRegistrationDetailDialog: Boolean = false,
+    val selectedRegistrationForDetail: RegistrationWithParticipant? = null,
 )
 
 @HiltViewModel
@@ -55,6 +62,7 @@ class TrainingDetailViewModel @Inject constructor(
     private val observeParticipantsUseCase: ObserveParticipantsUseCase,
     private val registerParticipantUseCase: RegisterParticipantUseCase,
     private val updateRegistrationPriceUseCase: UpdateRegistrationPriceUseCase,
+    private val updatePaymentStatusUseCase: UpdatePaymentStatusUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
 ) : ViewModel() {
 
@@ -270,6 +278,87 @@ class TrainingDetailViewModel @Inject constructor(
                         it.copy(
                             isUpdatingPrice = false,
                             errorMessage = result.cause.message ?: "Gagal mengubah jenis harga.",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun openRegistrationDetailDialog(item: RegistrationWithParticipant) {
+        _uiState.update {
+            it.copy(
+                showRegistrationDetailDialog = true,
+                selectedRegistrationForDetail = item,
+            )
+        }
+    }
+
+    fun dismissRegistrationDetailDialog() {
+        _uiState.update {
+            it.copy(
+                showRegistrationDetailDialog = false,
+                selectedRegistrationForDetail = null,
+            )
+        }
+    }
+
+    fun openPaymentStatusDialog(item: RegistrationWithParticipant) {
+        if (_uiState.value.currentUserRole == UserRole.ADMIN) {
+            _uiState.update {
+                it.copy(
+                    showPaymentStatusDialog = true,
+                    selectedRegistrationForPayment = item,
+                )
+            }
+        }
+    }
+
+    fun dismissPaymentStatusDialog() {
+        _uiState.update {
+            it.copy(
+                showPaymentStatusDialog = false,
+                selectedRegistrationForPayment = null,
+            )
+        }
+    }
+
+    fun updatePaymentStatus(newStatus: PaymentStatus) {
+        val selected = _uiState.value.selectedRegistrationForPayment ?: return
+        if (_uiState.value.currentUserRole != UserRole.ADMIN) {
+            _uiState.update { it.copy(errorMessage = "Hanya Admin yang dapat mengubah status pembayaran.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUpdatingPaymentStatus = true, errorMessage = null) }
+            val result = updatePaymentStatusUseCase(
+                registrationId = selected.registration.id,
+                newStatus = newStatus,
+            )
+            when (result) {
+                is AppResult.Success -> {
+                    val msg = if (newStatus == PaymentStatus.LUNAS) {
+                        "Status pembayaran berhasil ditandai Lunas."
+                    } else {
+                        "Status pembayaran berhasil diubah menjadi Belum Bayar."
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isUpdatingPaymentStatus = false,
+                            showPaymentStatusDialog = false,
+                            selectedRegistrationForPayment = null,
+                            showRegistrationDetailDialog = false,
+                            selectedRegistrationForDetail = null,
+                            successMessage = msg,
+                        )
+                    }
+                }
+                is AppResult.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            isUpdatingPaymentStatus = false,
+                            errorMessage = result.cause.message ?: "Gagal mengubah status pembayaran.",
                         )
                     }
                 }

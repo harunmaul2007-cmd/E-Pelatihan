@@ -1,6 +1,7 @@
 package com.harunmaul.epelatihan.domain.repository
 
 import com.harunmaul.epelatihan.core.common.AppResult
+import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.PricingType
 import com.harunmaul.epelatihan.domain.model.Registration
 import com.harunmaul.epelatihan.domain.model.RegistrationDetailSnapshot
@@ -18,5 +19,10 @@ interface RegistrationRepository {
         registrationId: String,
         newPricingType: PricingType,
         newPriceAmount: Long,
+    ): AppResult<Registration>
+    suspend fun updatePaymentStatus(
+        actorId: String,
+        registrationId: String,
+        newStatus: PaymentStatus,
     ): AppResult<Registration>
 }

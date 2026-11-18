@@ -221,4 +221,77 @@ class DefaultRegistrationRepository @Inject constructor(
             AppResult.Failure(e)
         }
     }
+
+    override suspend fun updatePaymentStatus(
+        actorId: String,
+        registrationId: String,
+        newStatus: PaymentStatus,
+    ): AppResult<Registration> {
+        return try {
+            val docRef = references.registrations.document(registrationId)
+            var updatedRegistration: Registration? = null
+            var oldStatus: String? = null
+            var oldPaidAt: String? = null
+            var oldPaidBy: String? = null
+
+            references.firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                if (!snapshot.exists()) {
+                    throw NoSuchElementException("Pendaftaran tidak ditemukan.")
+                }
+
+                val currentDoc = snapshot.toObject(RegistrationDocument::class.java)?.apply {
+                    id = snapshot.id
+                } ?: throw IllegalStateException("Format data pendaftaran tidak valid.")
+
+                oldStatus = currentDoc.paymentStatus
+                oldPaidAt = currentDoc.paidAt?.toDate()?.toInstant()?.toString()
+                oldPaidBy = currentDoc.paidBy
+
+                val payload = mutableMapOf<String, Any?>(
+                    "paymentStatus" to newStatus.name,
+                    "updatedBy" to actorId,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                )
+
+                if (newStatus == PaymentStatus.LUNAS) {
+                    payload["paidAt"] = FieldValue.serverTimestamp()
+                    payload["paidBy"] = actorId
+                } else {
+                    payload["paidAt"] = null
+                    payload["paidBy"] = null
+                }
+
+                transaction.update(docRef, payload)
+
+                val updatedDoc = currentDoc.copy(
+                    paymentStatus = newStatus.name,
+                    paidBy = if (newStatus == PaymentStatus.LUNAS) actorId else null,
+                    updatedBy = actorId,
+                )
+                updatedRegistration = updatedDoc.toDomain()
+            }.await()
+
+            auditLogRepository.recordLog(
+                actorId = actorId,
+                action = "UPDATE_PAYMENT_STATUS",
+                entityType = "REGISTRATION",
+                entityId = registrationId,
+                before = mapOf(
+                    "paymentStatus" to oldStatus,
+                    "paidAt" to oldPaidAt,
+                    "paidBy" to oldPaidBy,
+                ),
+                after = mapOf(
+                    "paymentStatus" to newStatus.name,
+                    "paidAt" to if (newStatus == PaymentStatus.LUNAS) "serverTimestamp" else null,
+                    "paidBy" to if (newStatus == PaymentStatus.LUNAS) actorId else null,
+                ),
+            )
+
+            AppResult.Success(checkNotNull(updatedRegistration))
+        } catch (e: Exception) {
+            AppResult.Failure(e)
+        }
+    }
 }

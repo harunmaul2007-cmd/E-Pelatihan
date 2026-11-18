@@ -135,6 +135,12 @@ class UpdateRegistrationPriceUseCaseTest {
             reg = updated
             return AppResult.Success(updated)
         }
+
+        override suspend fun updatePaymentStatus(
+            actorId: String,
+            registrationId: String,
+            newStatus: PaymentStatus,
+        ): AppResult<Registration> = error("Not needed")
     }
 
     private class FakeTrainingRepo(private val training: Training) : TrainingRepository {

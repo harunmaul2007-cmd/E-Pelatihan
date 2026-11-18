@@ -229,4 +229,20 @@
     <string name="pricing_badge_normal">Normal</string>
     <string name="status_unpaid">Belum Bayar</string>
     <string name="status_paid">Lunas</string>
+    <string name="confirm_payment_paid_title">Konfirmasi Pembayaran Lunas</string>
+    <string name="confirm_payment_paid_message">Tandai pembayaran peserta %1$s sebesar %2$s sebagai LUNAS?</string>
+    <string name="confirm_payment_unpaid_title">Koreksi Status Pembayaran</string>
+    <string name="confirm_payment_unpaid_message">Ubah status pembayaran peserta %1$s kembali menjadi BELUM BAYAR? Informasi tanggal dan petugas pelunasan akan dihapus.</string>
+    <string name="btn_mark_paid">Tandai Lunas</string>
+    <string name="btn_mark_unpaid">Ubah ke Belum Bayar</string>
+    <string name="payment_status_paid_success">Status pembayaran berhasil ditandai Lunas.</string>
+    <string name="payment_status_unpaid_success">Status pembayaran berhasil diubah menjadi Belum Bayar.</string>
+    <string name="updating_payment_status">Memperbarui status pembayaran…</string>
+    <string name="registration_detail_title">Detail Pendaftaran</string>
+    <string name="payment_info_section">Informasi Pembayaran</string>
+    <string name="paid_at_label">Tanggal Pelunasan: %1$s</string>
+    <string name="paid_by_label">Dicatat Oleh: %1$s</string>
+    <string name="registered_at_label">Waktu Pendaftaran: %1$s</string>
+    <string name="change_payment_status">Ubah Status Pembayaran</string>
+    <string name="close">Tutup</string>
 </resources>

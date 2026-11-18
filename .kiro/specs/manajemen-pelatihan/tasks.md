@@ -94,7 +94,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Izinkan hanya Admin memperbaiki data pendaftaran tersimpan dan catat perubahannya.
   - **Mencakup:** REQ-05, REQ-06, REQ-12.
 
-- [ ] 11. Implementasikan pengelolaan status pembayaran
+- [x] 11. Implementasikan pengelolaan status pembayaran
   - Tampilkan status `BELUM_BAYAR` dan `LUNAS` pada daftar serta detail pendaftaran.
   - Sembunyikan aksi perubahan pembayaran dari User.
   - Izinkan Admin mengubah status dengan konfirmasi.

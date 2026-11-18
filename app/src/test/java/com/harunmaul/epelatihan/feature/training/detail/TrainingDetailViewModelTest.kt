@@ -32,6 +32,7 @@ import com.harunmaul.epelatihan.domain.usecase.ObserveSessionUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingDetailUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveTrainingRegistrationsUseCase
 import com.harunmaul.epelatihan.domain.usecase.RegisterParticipantUseCase
+import com.harunmaul.epelatihan.domain.usecase.UpdatePaymentStatusUseCase
 import com.harunmaul.epelatihan.domain.usecase.UpdateRegistrationPriceUseCase
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -161,6 +162,24 @@ class TrainingDetailViewModelTest {
             }
             return AppResult.Failure(NoSuchElementException())
         }
+
+        override suspend fun updatePaymentStatus(
+            actorId: String,
+            registrationId: String,
+            newStatus: PaymentStatus,
+        ): AppResult<Registration> {
+            val idx = registrations.indexOfFirst { it.id == registrationId }
+            if (idx >= 0) {
+                val updated = registrations[idx].copy(
+                    paymentStatus = newStatus,
+                    paidAt = if (newStatus == PaymentStatus.LUNAS) Instant.now() else null,
+                    paidBy = if (newStatus == PaymentStatus.LUNAS) actorId else null,
+                )
+                registrations[idx] = updated
+                return AppResult.Success(updated)
+            }
+            return AppResult.Failure(NoSuchElementException())
+        }
     }
 
     private class FakeParticipantRepo(val participants: List<Participant>) : ParticipantRepository {
@@ -235,6 +254,7 @@ class TrainingDetailViewModelTest {
         val createPartUseCase = CreateParticipantUseCase(partRepo, authRepo)
         val registerPartUseCase = RegisterParticipantUseCase(regRepo, createPartUseCase, authRepo)
         val updateRegPriceUseCase = UpdateRegistrationPriceUseCase(regRepo, trainingRepo, authRepo)
+        val updatePaymentStatusUseCase = UpdatePaymentStatusUseCase(regRepo, authRepo)
         val sessionUseCase = ObserveSessionUseCase(authRepo)
         val savedStateHandle = SavedStateHandle(mapOf("trainingId" to "t-100"))
 
@@ -246,6 +266,7 @@ class TrainingDetailViewModelTest {
             observeParticipantsUseCase = observeParticipantsUseCase,
             registerParticipantUseCase = registerPartUseCase,
             updateRegistrationPriceUseCase = updateRegPriceUseCase,
+            updatePaymentStatusUseCase = updatePaymentStatusUseCase,
             observeSessionUseCase = sessionUseCase,
         )
     }
@@ -354,5 +375,143 @@ class TrainingDetailViewModelTest {
         assertEquals("Jenis harga pendaftaran berhasil diperbarui.", state.successMessage)
         assertEquals(PricingType.NORMAL, regRepo.registrations[0].pricingType)
         assertEquals(500000L, regRepo.registrations[0].priceAmount)
+    }
+
+    @Test
+    fun `admin updating payment status to LUNAS succeeds and updates list`() = runTest {
+        val initialReg = Registration(
+            id = "reg-100",
+            trainingId = "t-100",
+            participantId = "p-1",
+            pricingType = PricingType.NORMAL,
+            priceAmount = 500000L,
+            paymentStatus = PaymentStatus.BELUM_BAYAR,
+            paidAt = null,
+            paidBy = null,
+            createdBy = "admin-1",
+            createdAt = Instant.now(),
+            updatedBy = "admin-1",
+            updatedAt = Instant.now(),
+        )
+        val trainingRepo = FakeTrainingRepo(sampleTraining)
+        val authRepo = FakeAuthRepo(adminProfile)
+        val regRepo = FakeRegistrationRepo(listOf(initialReg))
+        val partRepo = FakeParticipantRepo(listOf(sampleParticipant))
+
+        val viewModel = createViewModel(trainingRepo, authRepo, regRepo, partRepo)
+        advanceUntilIdle()
+
+        viewModel.openPaymentStatusDialog(RegistrationWithParticipant(initialReg, sampleParticipant))
+        assertTrue(viewModel.uiState.value.showPaymentStatusDialog)
+
+        viewModel.updatePaymentStatus(PaymentStatus.LUNAS)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Status pembayaran berhasil ditandai Lunas.", state.successMessage)
+        assertFalse(state.showPaymentStatusDialog)
+        assertEquals(PaymentStatus.LUNAS, regRepo.registrations[0].paymentStatus)
+        assertEquals("admin-1", regRepo.registrations[0].paidBy)
+    }
+
+    @Test
+    fun `admin reverting payment status to BELUM_BAYAR succeeds`() = runTest {
+        val initialReg = Registration(
+            id = "reg-100",
+            trainingId = "t-100",
+            participantId = "p-1",
+            pricingType = PricingType.NORMAL,
+            priceAmount = 500000L,
+            paymentStatus = PaymentStatus.LUNAS,
+            paidAt = Instant.now(),
+            paidBy = "admin-1",
+            createdBy = "admin-1",
+            createdAt = Instant.now(),
+            updatedBy = "admin-1",
+            updatedAt = Instant.now(),
+        )
+        val trainingRepo = FakeTrainingRepo(sampleTraining)
+        val authRepo = FakeAuthRepo(adminProfile)
+        val regRepo = FakeRegistrationRepo(listOf(initialReg))
+        val partRepo = FakeParticipantRepo(listOf(sampleParticipant))
+
+        val viewModel = createViewModel(trainingRepo, authRepo, regRepo, partRepo)
+        advanceUntilIdle()
+
+        viewModel.openPaymentStatusDialog(RegistrationWithParticipant(initialReg, sampleParticipant))
+        viewModel.updatePaymentStatus(PaymentStatus.BELUM_BAYAR)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Status pembayaran berhasil diubah menjadi Belum Bayar.", state.successMessage)
+        assertEquals(PaymentStatus.BELUM_BAYAR, regRepo.registrations[0].paymentStatus)
+        assertEquals(null, regRepo.registrations[0].paidBy)
+    }
+
+    @Test
+    fun `regular user cannot open payment dialog or update payment status`() = runTest {
+        val initialReg = Registration(
+            id = "reg-100",
+            trainingId = "t-100",
+            participantId = "p-1",
+            pricingType = PricingType.NORMAL,
+            priceAmount = 500000L,
+            paymentStatus = PaymentStatus.BELUM_BAYAR,
+            paidAt = null,
+            paidBy = null,
+            createdBy = "admin-1",
+            createdAt = Instant.now(),
+            updatedBy = "admin-1",
+            updatedAt = Instant.now(),
+        )
+        val trainingRepo = FakeTrainingRepo(sampleTraining)
+        val authRepo = FakeAuthRepo(userProfile)
+        val regRepo = FakeRegistrationRepo(listOf(initialReg))
+        val partRepo = FakeParticipantRepo(listOf(sampleParticipant))
+
+        val viewModel = createViewModel(trainingRepo, authRepo, regRepo, partRepo)
+        advanceUntilIdle()
+
+        viewModel.openPaymentStatusDialog(RegistrationWithParticipant(initialReg, sampleParticipant))
+        assertFalse(viewModel.uiState.value.showPaymentStatusDialog)
+
+        viewModel.updatePaymentStatus(PaymentStatus.LUNAS)
+        advanceUntilIdle()
+
+        assertEquals(PaymentStatus.BELUM_BAYAR, regRepo.registrations[0].paymentStatus)
+    }
+
+    @Test
+    fun `opening and dismissing registration detail dialog updates state properly`() = runTest {
+        val initialReg = Registration(
+            id = "reg-100",
+            trainingId = "t-100",
+            participantId = "p-1",
+            pricingType = PricingType.NORMAL,
+            priceAmount = 500000L,
+            paymentStatus = PaymentStatus.BELUM_BAYAR,
+            paidAt = null,
+            paidBy = null,
+            createdBy = "admin-1",
+            createdAt = Instant.now(),
+            updatedBy = "admin-1",
+            updatedAt = Instant.now(),
+        )
+        val trainingRepo = FakeTrainingRepo(sampleTraining)
+        val authRepo = FakeAuthRepo(userProfile)
+        val regRepo = FakeRegistrationRepo(listOf(initialReg))
+        val partRepo = FakeParticipantRepo(listOf(sampleParticipant))
+
+        val viewModel = createViewModel(trainingRepo, authRepo, regRepo, partRepo)
+        advanceUntilIdle()
+
+        val item = RegistrationWithParticipant(initialReg, sampleParticipant)
+        viewModel.openRegistrationDetailDialog(item)
+        assertTrue(viewModel.uiState.value.showRegistrationDetailDialog)
+        assertEquals(item, viewModel.uiState.value.selectedRegistrationForDetail)
+
+        viewModel.dismissRegistrationDetailDialog()
+        assertFalse(viewModel.uiState.value.showRegistrationDetailDialog)
+        assertEquals(null, viewModel.uiState.value.selectedRegistrationForDetail)
     }
 }

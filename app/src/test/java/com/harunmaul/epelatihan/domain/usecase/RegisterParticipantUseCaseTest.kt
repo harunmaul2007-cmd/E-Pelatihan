@@ -130,6 +130,12 @@ class RegisterParticipantUseCaseTest {
             newPricingType: PricingType,
             newPriceAmount: Long,
         ): AppResult<Registration> = error("Not needed")
+
+        override suspend fun updatePaymentStatus(
+            actorId: String,
+            registrationId: String,
+            newStatus: PaymentStatus,
+        ): AppResult<Registration> = error("Not needed")
     }
 
     private class FakeParticipantRepo : ParticipantRepository {

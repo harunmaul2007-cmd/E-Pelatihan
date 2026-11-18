@@ -149,7 +149,7 @@ Dokumen ini mengacu pada #[[file:requirements.md]] dan #[[file:design.md]]. Kerj
   - Pastikan data lama tetap konsisten setelah harga master atau pelatihan diubah.
   - **Mencakup:** REQ-06, REQ-09, REQ-11, REQ-12, REQ-13.
 
-- [ ] 17. Verifikasi penerimaan dan siapkan build aplikasi
+- [x] 17. Verifikasi penerimaan dan siapkan build aplikasi
   - Periksa setiap kriteria REQ-01 sampai REQ-13 pada akun Admin dan User.
   - Verifikasi User tidak dapat melakukan operasi Admin melalui UI maupun request langsung.
   - Verifikasi nama komunitas dan logo lokal tampil pada layar login sebelum autentikasi.

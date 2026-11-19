@@ -64,6 +64,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harunmaul.epelatihan.R
 import com.harunmaul.epelatihan.domain.model.UserRole
+import com.harunmaul.epelatihan.feature.home.component.AnnualParticipantLineChartCard
 import com.harunmaul.epelatihan.feature.participant.importwa.ImportWhatsAppDialog
 
 data class HomeMenuItem(
@@ -446,12 +447,12 @@ private fun HomeScreen(
                             }
                         }
 
-                        // Stat 2: Total Peserta
+                        // Stat 2: Total Peserta Pelatihan
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { onNavigateToParticipants() },
+                                .clickable { onNavigateToTrainings() },
                             color = Color(0xFFE0F7FA),
                             shape = RoundedCornerShape(12.dp),
                         ) {
@@ -467,7 +468,7 @@ private fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Total Peserta",
+                                    text = "Peserta Pelatihan",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF00897B),
@@ -478,6 +479,15 @@ private fun HomeScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 4. Grafik Garis Peserta 1 Tahun Berjalan
+            AnnualParticipantLineChartCard(
+                year = uiState.currentYear,
+                trends = uiState.monthlyTrends,
+                totalYearParticipants = uiState.totalYearParticipants,
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }

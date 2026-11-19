@@ -27,6 +27,30 @@ class DefaultRegistrationRepository @Inject constructor(
     private val auditLogRepository: AuditLogRepository,
 ) : RegistrationRepository {
 
+    override fun observeAllRegistrations(): Flow<AppResult<List<Registration>>> = callbackFlow {
+        val listener = references.registrations.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(AppResult.Failure(error))
+                return@addSnapshotListener
+            }
+            if (snapshot != null) {
+                val registrations = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        doc.toObject(RegistrationDocument::class.java)?.apply {
+                            id = doc.id
+                        }?.toDomain()
+                    } catch (_: Exception) {
+                        null
+                    }
+                }.sortedWith(compareBy { it.createdAt ?: java.time.Instant.MIN })
+                trySend(AppResult.Success(registrations))
+            } else {
+                trySend(AppResult.Success(emptyList()))
+            }
+        }
+        awaitClose { listener.remove() }
+    }
+
     override fun observeRegistrationsByTraining(trainingId: String): Flow<AppResult<RegistrationListSnapshot>> = callbackFlow {
         val query = references.registrations
             .whereEqualTo("trainingId", trainingId)

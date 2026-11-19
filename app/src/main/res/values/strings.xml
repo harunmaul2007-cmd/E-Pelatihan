@@ -277,6 +277,15 @@
     <string name="export_failed">Gagal mengekspor laporan: %1$s</string>
     <string name="exporting_progress">Mengekspor laporan…</string>
     <string name="export_menu_title">Pilih Format Ekspor</string>
+    <string name="export_options_dialog_title">Ekspor Laporan (%1$s)</string>
+    <string name="export_options_send_wa_title">Kirim via WhatsApp</string>
+    <string name="export_options_send_wa_desc">Kirim langsung ke kontak atau grup WhatsApp</string>
+    <string name="export_options_send_email_title">Kirim via Email</string>
+    <string name="export_options_send_email_desc">Buka aplikasi email (Gmail) dengan lampiran</string>
+    <string name="export_options_share_title">Bagikan ke Aplikasi Lain</string>
+    <string name="export_options_share_desc">Pilih aplikasi lain (Drive, Telegram, dll.)</string>
+    <string name="export_options_save_title">Simpan ke Perangkat</string>
+    <string name="export_options_save_desc">Unduh dan simpan file ke memori HP</string>
     <string name="loading_report">Memuat laporan bulanan…</string>
 
     <!-- Settings Feature -->

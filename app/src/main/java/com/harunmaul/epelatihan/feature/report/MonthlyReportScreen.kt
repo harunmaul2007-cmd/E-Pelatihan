@@ -1,8 +1,14 @@
 package com.harunmaul.epelatihan.feature.report
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -141,6 +147,61 @@ fun MonthlyReportRoute(
         }
     }
 
+    var exportFormatDialog by remember { mutableStateOf<Boolean?>(null) } // true: PDF, false: Excel, null: closed
+
+    if (exportFormatDialog != null) {
+        val isPdf = exportFormatDialog == true
+        val idLocale = Locale.forLanguageTag("id-ID")
+        val periodStr = uiState.report?.let {
+            "${it.month.month.getDisplayName(TextStyle.FULL, idLocale)} ${it.month.year}"
+        } ?: uiState.selectedMonth.toString()
+
+        ExportOptionsDialog(
+            isPdf = isPdf,
+            periodText = periodStr,
+            onDismissRequest = { exportFormatDialog = null },
+            onSendViaWhatsApp = {
+                exportAndShare(
+                    context = context,
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPdf = isPdf,
+                    destination = ExportShareDestination.WHATSAPP,
+                )
+            },
+            onSendViaEmail = {
+                exportAndShare(
+                    context = context,
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPdf = isPdf,
+                    destination = ExportShareDestination.EMAIL,
+                )
+            },
+            onShareGeneral = {
+                exportAndShare(
+                    context = context,
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPdf = isPdf,
+                    destination = ExportShareDestination.GENERAL,
+                )
+            },
+            onSaveToDevice = {
+                val defaultName = if (isPdf) {
+                    "Laporan-Pelatihan-${uiState.selectedMonth}.pdf"
+                } else {
+                    "Laporan-Pelatihan-${uiState.selectedMonth}.xlsx"
+                }
+                if (isPdf) {
+                    pdfLauncher.launch(defaultName)
+                } else {
+                    xlsxLauncher.launch(defaultName)
+                }
+            },
+        )
+    }
+
     MonthlyReportScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
@@ -150,12 +211,10 @@ fun MonthlyReportRoute(
         onSelectMonth = viewModel::selectMonth,
         onRefresh = viewModel::refresh,
         onExportPdf = {
-            val defaultName = "Laporan-Pelatihan-${uiState.selectedMonth}.pdf"
-            pdfLauncher.launch(defaultName)
+            exportFormatDialog = true
         },
         onExportXlsx = {
-            val defaultName = "Laporan-Pelatihan-${uiState.selectedMonth}.xlsx"
-            xlsxLauncher.launch(defaultName)
+            exportFormatDialog = false
         },
         onNavigateToTrainingDetail = onNavigateToTrainingDetail,
     )
@@ -943,4 +1002,110 @@ private fun MonthYearPickerDialog(
             }
         },
     )
+}
+
+private enum class ExportShareDestination {
+    WHATSAPP,
+    EMAIL,
+    GENERAL,
+}
+
+private fun exportAndShare(
+    context: Context,
+    uiState: MonthlyReportUiState,
+    viewModel: MonthlyReportViewModel,
+    isPdf: Boolean,
+    destination: ExportShareDestination,
+) {
+    val report = uiState.report ?: return
+    val idLocale = Locale.forLanguageTag("id-ID")
+    val monthName = report.month.month.getDisplayName(TextStyle.FULL, idLocale)
+    val year = report.month.year
+    val ext = if (isPdf) "pdf" else "xlsx"
+    val mimeType = if (isPdf) {
+        "application/pdf"
+    } else {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+
+    val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
+    val file = File(reportsDir, "Laporan_Pelatihan_${monthName}_$year.$ext")
+
+    val fileOutputStream = try {
+        FileOutputStream(file)
+    } catch (e: Exception) {
+        Toast.makeText(context, "Gagal membuat berkas: ${e.message}", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    val onComplete: () -> Unit = {
+        try {
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file,
+            )
+            val subject = "Laporan Pelatihan - $monthName $year"
+            val textBody = "Berikut terlampir dokumen Laporan Pelatihan periode $monthName $year.\n\nSalam,\nE-Pelatihan"
+
+            when (destination) {
+                ExportShareDestination.WHATSAPP -> {
+                    val waIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_TEXT, textBody)
+                        setPackage("com.whatsapp")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    try {
+                        context.startActivity(waIntent)
+                    } catch (_: Exception) {
+                        try {
+                            waIntent.setPackage("com.whatsapp.w4b")
+                            context.startActivity(waIntent)
+                        } catch (_: Exception) {
+                            waIntent.setPackage(null)
+                            context.startActivity(Intent.createChooser(waIntent, "Kirim via WhatsApp"))
+                        }
+                    }
+                }
+
+                ExportShareDestination.EMAIL -> {
+                    val emailIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                        putExtra(Intent.EXTRA_TEXT, textBody)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    try {
+                        emailIntent.selector = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                        context.startActivity(Intent.createChooser(emailIntent, "Kirim via Email"))
+                    } catch (_: Exception) {
+                        emailIntent.selector = null
+                        context.startActivity(Intent.createChooser(emailIntent, "Kirim via Email"))
+                    }
+                }
+
+                ExportShareDestination.GENERAL -> {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                        putExtra(Intent.EXTRA_TEXT, textBody)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Bagikan Dokumen Laporan"))
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Gagal membagikan berkas: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    if (isPdf) {
+        viewModel.exportPdf(fileOutputStream, onComplete)
+    } else {
+        viewModel.exportXlsx(fileOutputStream, onComplete)
+    }
 }

@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContactPhone
-import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.School
@@ -170,16 +169,6 @@ private fun HomeScreen(
                 backgroundColor = Color(0xFFE0F7FA),
                 iconTint = Color(0xFF00838F),
                 onClick = onNavigateToParticipants,
-            ),
-        )
-        add(
-            HomeMenuItem(
-                id = "registrations",
-                title = "Pendaftaran",
-                icon = Icons.Default.EditNote,
-                backgroundColor = Color(0xFFE8F5E9),
-                iconTint = Color(0xFF2E7D32),
-                onClick = onNavigateToTrainings,
             ),
         )
         add(

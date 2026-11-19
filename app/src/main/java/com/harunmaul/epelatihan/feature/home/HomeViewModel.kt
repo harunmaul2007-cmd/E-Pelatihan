@@ -2,9 +2,11 @@ package com.harunmaul.epelatihan.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.harunmaul.epelatihan.core.common.AppResult
 import com.harunmaul.epelatihan.domain.model.UserProfile
 import com.harunmaul.epelatihan.domain.model.UserSession
-import com.harunmaul.epelatihan.domain.repository.AppInfoRepository
+import com.harunmaul.epelatihan.domain.repository.ParticipantRepository
+import com.harunmaul.epelatihan.domain.repository.TrainingRepository
 import com.harunmaul.epelatihan.domain.usecase.LogoutUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveAppSettingsUseCase
 import com.harunmaul.epelatihan.domain.usecase.ObserveSessionUseCase
@@ -19,31 +21,35 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val appName: String = "E-Pelatihan",
     val communityName: String = "E-Pelatihan",
-    val environment: String = "development",
-    val firebaseConfigured: Boolean = false,
     val currentUser: UserProfile? = null,
+    val activeTrainingsCount: Int = 0,
+    val totalParticipantsCount: Int = 0,
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    appInfoRepository: AppInfoRepository,
     observeAppSettingsUseCase: ObserveAppSettingsUseCase,
     observeSessionUseCase: ObserveSessionUseCase,
+    trainingRepository: TrainingRepository,
+    participantRepository: ParticipantRepository,
     private val logoutUseCase: LogoutUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = combine(
-        appInfoRepository.observeAppInfo(),
         observeAppSettingsUseCase(),
         observeSessionUseCase(),
-    ) { appInfo, settings, session ->
+        trainingRepository.observeTrainings(includeArchived = false),
+        participantRepository.observeParticipants(includeInactive = false),
+    ) { settings, session, trainingsResult, participantsResult ->
         val user = (session as? UserSession.Authenticated)?.profile
+        val activeTrainings = (trainingsResult as? AppResult.Success)?.value?.trainings?.size ?: 0
+        val totalParticipants = (participantsResult as? AppResult.Success)?.value?.participants?.size ?: 0
+
         HomeUiState(
-            appName = appInfo.name,
             communityName = settings.communityName,
-            environment = appInfo.environment,
-            firebaseConfigured = appInfo.firebaseConfigured,
             currentUser = user,
+            activeTrainingsCount = activeTrainings,
+            totalParticipantsCount = totalParticipants,
         )
     }.stateIn(
         scope = viewModelScope,

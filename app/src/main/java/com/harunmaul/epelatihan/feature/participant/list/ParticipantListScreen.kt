@@ -50,8 +50,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.harunmaul.epelatihan.R
 import com.harunmaul.epelatihan.domain.model.Participant
+import com.harunmaul.epelatihan.feature.participant.importwa.ImportWhatsAppDialog
 
 @Composable
 fun ParticipantListRoute(
@@ -82,6 +87,14 @@ fun ParticipantListScreen(
     onSearchQueryChanged: (String) -> Unit,
     onIncludeInactiveToggled: (Boolean) -> Unit,
 ) {
+    var showImportWaDialog by remember { mutableStateOf(false) }
+
+    if (showImportWaDialog) {
+        ImportWhatsAppDialog(
+            onDismissRequest = { showImportWaDialog = false },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -96,6 +109,15 @@ fun ParticipantListScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cancel),
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showImportWaDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.ContactPhone,
+                            contentDescription = "Import Kontak WhatsApp",
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 },

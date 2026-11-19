@@ -19,7 +19,9 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.PriceChange
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,12 +35,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.harunmaul.epelatihan.R
 import com.harunmaul.epelatihan.core.common.formatDateTime
 import com.harunmaul.epelatihan.core.common.toRupiahString
+import com.harunmaul.epelatihan.core.designsystem.theme.BrandPurple
 import com.harunmaul.epelatihan.core.designsystem.theme.BrandSuccess
 import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.PricingType
@@ -51,7 +55,8 @@ fun RegistrationDetailDialog(
     training: Training,
     isAdmin: Boolean,
     onDismissRequest: () -> Unit,
-    onOpenWhatsAppClick: () -> Unit,
+    onOpenWhatsAppZoomClick: () -> Unit,
+    onOpenWhatsAppRecordingClick: () -> Unit,
     onChangePaymentStatusClick: () -> Unit,
     onEditPriceClick: () -> Unit,
 ) {
@@ -251,21 +256,55 @@ fun RegistrationDetailDialog(
                 // WhatsApp Section (Hanya untuk peserta Lunas)
                 if (registration.paymentStatus == PaymentStatus.LUNAS) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    OutlinedButton(
-                        onClick = onOpenWhatsAppClick,
+                    Text(
+                        text = stringResource(R.string.whatsapp_section_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Tombol 1: Link Zoom & Info (Hijau WhatsApp)
+                    Button(
+                        onClick = onOpenWhatsAppZoomClick,
                         modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandSuccess,
+                            contentColor = Color.White,
+                        ),
                         shape = RoundedCornerShape(10.dp),
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            imageVector = Icons.Default.Videocam,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
-                            tint = BrandSuccess,
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.open_whatsapp_button),
-                            color = BrandSuccess,
+                            text = stringResource(R.string.send_zoom_whatsapp_button),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Tombol 2: Link Rekaman & Materi (Warna Ungu/Indigo Berbeda)
+                    Button(
+                        onClick = onOpenWhatsAppRecordingClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandPurple,
+                            contentColor = Color.White,
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircleOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.send_recording_whatsapp_button),
                             fontWeight = FontWeight.SemiBold,
                         )
                     }

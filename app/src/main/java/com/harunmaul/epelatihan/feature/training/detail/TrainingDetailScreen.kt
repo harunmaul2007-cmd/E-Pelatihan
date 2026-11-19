@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.PriceChange
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -78,6 +79,7 @@ import com.harunmaul.epelatihan.R
 import com.harunmaul.epelatihan.core.common.formatDateTime
 import com.harunmaul.epelatihan.core.common.formatSchedule
 import com.harunmaul.epelatihan.core.common.toRupiahString
+import com.harunmaul.epelatihan.core.designsystem.theme.BrandPurple
 import com.harunmaul.epelatihan.core.designsystem.theme.BrandSuccess
 import com.harunmaul.epelatihan.domain.model.MeetingMethod
 import com.harunmaul.epelatihan.domain.model.PaymentStatus
@@ -87,6 +89,7 @@ import com.harunmaul.epelatihan.domain.model.RegistrationWithParticipant
 import com.harunmaul.epelatihan.domain.model.Training
 import com.harunmaul.epelatihan.domain.model.TrainingLifecycle
 import com.harunmaul.epelatihan.domain.model.UserRole
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import com.harunmaul.epelatihan.domain.validation.TrainingStatusResolver
 import com.harunmaul.epelatihan.feature.training.list.TrainingStatusBadge
 
@@ -139,7 +142,7 @@ fun TrainingDetailRoute(
         onUpdatePaymentStatus = viewModel::updatePaymentStatus,
         onOpenRegistrationDetailDialog = viewModel::openRegistrationDetailDialog,
         onDismissRegistrationDetailDialog = viewModel::dismissRegistrationDetailDialog,
-        onOpenWhatsApp = viewModel::openWhatsApp,
+        onOpenWhatsApp = { regId, type -> viewModel.openWhatsApp(regId, type) },
     )
 }
 
@@ -169,7 +172,7 @@ fun TrainingDetailScreen(
     onUpdatePaymentStatus: (PaymentStatus) -> Unit = {},
     onOpenRegistrationDetailDialog: (RegistrationWithParticipant) -> Unit = {},
     onDismissRegistrationDetailDialog: () -> Unit = {},
-    onOpenWhatsApp: (String) -> Unit = {},
+    onOpenWhatsApp: (String, WhatsAppMessageType) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     var showArchiveDialog by remember { mutableStateOf(false) }
@@ -235,8 +238,17 @@ fun TrainingDetailScreen(
             training = uiState.training,
             isAdmin = uiState.currentUserRole == UserRole.ADMIN,
             onDismissRequest = onDismissRegistrationDetailDialog,
-            onOpenWhatsAppClick = {
-                onOpenWhatsApp(uiState.selectedRegistrationForDetail.registration.id)
+            onOpenWhatsAppZoomClick = {
+                onOpenWhatsApp(
+                    uiState.selectedRegistrationForDetail.registration.id,
+                    WhatsAppMessageType.ZOOM_INFO,
+                )
+            },
+            onOpenWhatsAppRecordingClick = {
+                onOpenWhatsApp(
+                    uiState.selectedRegistrationForDetail.registration.id,
+                    WhatsAppMessageType.RECORDING_AND_MATERIAL,
+                )
             },
             onChangePaymentStatusClick = {
                 onOpenPaymentStatusDialog(uiState.selectedRegistrationForDetail)
@@ -579,7 +591,12 @@ fun TrainingDetailScreen(
                                                 item = item,
                                                 isAdmin = uiState.currentUserRole == UserRole.ADMIN,
                                                 onClick = { onOpenRegistrationDetailDialog(item) },
-                                                onOpenWhatsAppClick = { onOpenWhatsApp(item.registration.id) },
+                                                onOpenWhatsAppZoomClick = {
+                                                    onOpenWhatsApp(item.registration.id, WhatsAppMessageType.ZOOM_INFO)
+                                                },
+                                                onOpenWhatsAppRecordingClick = {
+                                                    onOpenWhatsApp(item.registration.id, WhatsAppMessageType.RECORDING_AND_MATERIAL)
+                                                },
                                                 onEditPriceClick = { onOpenEditPriceDialog(item) },
                                                 onChangePaymentStatusClick = { onOpenPaymentStatusDialog(item) },
                                             )
@@ -661,7 +678,8 @@ private fun RegistrationItemCard(
     item: RegistrationWithParticipant,
     isAdmin: Boolean,
     onClick: () -> Unit,
-    onOpenWhatsAppClick: () -> Unit,
+    onOpenWhatsAppZoomClick: () -> Unit,
+    onOpenWhatsAppRecordingClick: () -> Unit,
     onEditPriceClick: () -> Unit,
     onChangePaymentStatusClick: () -> Unit,
 ) {
@@ -690,13 +708,24 @@ private fun RegistrationItemCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (item.registration.paymentStatus == PaymentStatus.LUNAS) {
                         IconButton(
-                            onClick = onOpenWhatsAppClick,
+                            onClick = onOpenWhatsAppZoomClick,
                             modifier = Modifier.size(32.dp),
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = stringResource(R.string.open_whatsapp_button),
+                                imageVector = Icons.Default.Videocam,
+                                contentDescription = stringResource(R.string.send_zoom_whatsapp_button),
                                 tint = BrandSuccess,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        IconButton(
+                            onClick = onOpenWhatsAppRecordingClick,
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayCircleOutline,
+                                contentDescription = stringResource(R.string.send_recording_whatsapp_button),
+                                tint = BrandPurple,
                                 modifier = Modifier.size(18.dp),
                             )
                         }

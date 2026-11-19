@@ -12,6 +12,7 @@ import com.harunmaul.epelatihan.domain.model.RegistrationWithParticipant
 import com.harunmaul.epelatihan.domain.model.Training
 import com.harunmaul.epelatihan.domain.model.UserRole
 import com.harunmaul.epelatihan.domain.model.UserSession
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import com.harunmaul.epelatihan.domain.usecase.ArchiveTrainingUseCase
 import com.harunmaul.epelatihan.domain.usecase.NewParticipantInput
 import com.harunmaul.epelatihan.domain.usecase.ObserveParticipantsUseCase
@@ -368,9 +369,12 @@ class TrainingDetailViewModel @Inject constructor(
         }
     }
 
-    fun openWhatsApp(registrationId: String) {
+    fun openWhatsApp(
+        registrationId: String,
+        type: WhatsAppMessageType = WhatsAppMessageType.ZOOM_INFO,
+    ) {
         viewModelScope.launch {
-            val result = openWhatsAppUseCase(registrationId)
+            val result = openWhatsAppUseCase(registrationId, type)
             when (result) {
                 is AppResult.Success -> {
                     _uiState.update {

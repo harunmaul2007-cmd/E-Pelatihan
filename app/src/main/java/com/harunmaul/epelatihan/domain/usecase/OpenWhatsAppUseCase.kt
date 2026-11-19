@@ -5,6 +5,7 @@ import com.harunmaul.epelatihan.core.common.AuthorizationException
 import com.harunmaul.epelatihan.core.common.InactiveAccountException
 import com.harunmaul.epelatihan.domain.model.PaymentStatus
 import com.harunmaul.epelatihan.domain.model.UserSession
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuthRepository
 import com.harunmaul.epelatihan.domain.repository.ParticipantRepository
@@ -25,7 +26,10 @@ class OpenWhatsAppUseCase @Inject constructor(
     private val whatsAppLauncher: WhatsAppLauncher,
     private val whatsAppLogRepository: WhatsAppLogRepository,
 ) {
-    suspend operator fun invoke(registrationId: String): AppResult<Unit> {
+    suspend operator fun invoke(
+        registrationId: String,
+        type: WhatsAppMessageType = WhatsAppMessageType.ZOOM_INFO,
+    ): AppResult<Unit> {
         val session = authRepository.observeSession().first()
         val authenticated = session as? UserSession.Authenticated
             ?: return AppResult.Failure(AuthorizationException("Pengguna belum login."))
@@ -70,6 +74,7 @@ class OpenWhatsAppUseCase @Inject constructor(
             participant = participant,
             training = training,
             communityName = communityName,
+            type = type,
         )
 
         val launchResult = whatsAppLauncher.openWhatsApp(

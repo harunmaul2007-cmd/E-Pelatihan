@@ -22,6 +22,7 @@ import com.harunmaul.epelatihan.domain.model.TrainingListSnapshot
 import com.harunmaul.epelatihan.domain.model.UserProfile
 import com.harunmaul.epelatihan.domain.model.UserRole
 import com.harunmaul.epelatihan.domain.model.UserSession
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import com.harunmaul.epelatihan.domain.model.WhatsAppOpenLog
 import com.harunmaul.epelatihan.domain.repository.AppSettingsRepository
 import com.harunmaul.epelatihan.domain.repository.AuthRepository
@@ -255,6 +256,40 @@ class OpenWhatsAppUseCaseTest {
         assertEquals(1, logRepo.recordedLogs.size)
         assertEquals("reg-paid", logRepo.recordedLogs[0].registrationId)
         assertEquals("user-1", logRepo.recordedLogs[0].openedBy)
+    }
+
+    @Test
+    fun `opening whatsapp for recording and material launches correct message format`() = runBlocking {
+        val regRepo = FakeRegRepo(mapOf("reg-paid" to paidRegistration))
+        val partRepo = FakePartRepo(sampleParticipant)
+        val trainingRepo = FakeTrainingRepo(sampleTraining.copy(
+            recordingUrl = "https://youtu.be/sample",
+            materialUrl = "https://drive.google.com/sample.pdf",
+        ))
+        val authRepo = FakeAuthRepo(userProfile)
+        val settingsRepo = FakeAppSettingsRepo()
+        val launcher = FakeWhatsAppLauncher(shouldSucceed = true)
+        val logRepo = FakeWhatsAppLogRepo()
+
+        val useCase = OpenWhatsAppUseCase(
+            registrationRepository = regRepo,
+            participantRepository = partRepo,
+            trainingRepository = trainingRepo,
+            appSettingsRepository = settingsRepo,
+            authRepository = authRepo,
+            buildWhatsAppMessageUseCase = BuildWhatsAppMessageUseCase(),
+            whatsAppLauncher = launcher,
+            whatsAppLogRepository = logRepo,
+        )
+
+        val result = useCase("reg-paid", WhatsAppMessageType.RECORDING_AND_MATERIAL)
+
+        assertTrue(result is AppResult.Success)
+        assertEquals("6281234567890", launcher.launchedPhone)
+        assertTrue(launcher.launchedMessage?.contains("Berikut link rekaman dan Materi Pelatihan Pelatihan Android") == true)
+        assertTrue(launcher.launchedMessage?.contains("Link Rekaman : https://youtu.be/sample") == true)
+        assertTrue(launcher.launchedMessage?.contains("Link Materi : https://drive.google.com/sample.pdf") == true)
+        assertEquals(1, logRepo.recordedLogs.size)
     }
 
     @Test

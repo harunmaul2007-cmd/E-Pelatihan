@@ -5,7 +5,9 @@ import com.harunmaul.epelatihan.domain.model.Participant
 import com.harunmaul.epelatihan.domain.model.PricingScheme
 import com.harunmaul.epelatihan.domain.model.Training
 import com.harunmaul.epelatihan.domain.model.TrainingLifecycle
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import java.time.Instant
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -74,8 +76,6 @@ class BuildWhatsAppMessageUseCaseTest {
         assertTrue(message.contains("Dr. Harun"))
         assertTrue(message.contains("Online (Zoom)"))
         assertTrue(message.contains("Link Zoom: https://zoom.us/j/999888"))
-        assertTrue(message.contains("Link Rekaman: https://drive.google.com/recording"))
-        assertTrue(message.contains("Link Materi: https://drive.google.com/material.pdf"))
         assertTrue(message.contains("Komunitas Android Indonesia"))
     }
 
@@ -91,6 +91,36 @@ class BuildWhatsAppMessageUseCaseTest {
         assertTrue(message.contains("Workshop Flutter Offline"))
         assertTrue(message.contains("Offline (Tatap Muka)"))
         assertTrue(message.contains("Lokasi: Gedung Serbaguna Lt. 2, Jakarta"))
-        assertTrue(!message.contains("Link Zoom"))
+        assertFalse(message.contains("Link Zoom"))
+    }
+
+    @Test
+    fun `build recording and material message contains correct format and links`() {
+        val message = useCase(
+            participant = participant,
+            training = onlineTraining,
+            communityName = "Komunitas Android Indonesia",
+            type = WhatsAppMessageType.RECORDING_AND_MATERIAL,
+        )
+
+        assertTrue(message.contains("Halo Budi Hartono"))
+        assertTrue(message.contains("Berikut link rekaman dan Materi Pelatihan Pelatihan Android Jetpack Compose"))
+        assertTrue(message.contains("Link Rekaman : https://drive.google.com/recording"))
+        assertTrue(message.contains("Link Materi : https://drive.google.com/material.pdf"))
+        assertTrue(message.contains("Salam,\nKomunitas Android Indonesia"))
+    }
+
+    @Test
+    fun `build recording and material message handles blank urls with dashes`() {
+        val message = useCase(
+            participant = participant,
+            training = offlineTraining,
+            communityName = "Komunitas Android Indonesia",
+            type = WhatsAppMessageType.RECORDING_AND_MATERIAL,
+        )
+
+        assertTrue(message.contains("Berikut link rekaman dan Materi Pelatihan Workshop Flutter Offline"))
+        assertTrue(message.contains("Link Rekaman : -"))
+        assertTrue(message.contains("Link Materi : -"))
     }
 }

@@ -3,6 +3,7 @@ package com.harunmaul.epelatihan.domain.usecase
 import com.harunmaul.epelatihan.domain.model.MeetingMethod
 import com.harunmaul.epelatihan.domain.model.Participant
 import com.harunmaul.epelatihan.domain.model.Training
+import com.harunmaul.epelatihan.domain.model.WhatsAppMessageType
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -10,6 +11,26 @@ import javax.inject.Inject
 
 class BuildWhatsAppMessageUseCase @Inject constructor() {
     operator fun invoke(
+        participant: Participant,
+        training: Training,
+        communityName: String,
+        type: WhatsAppMessageType = WhatsAppMessageType.ZOOM_INFO,
+    ): String {
+        return when (type) {
+            WhatsAppMessageType.ZOOM_INFO -> buildZoomAndScheduleMessage(
+                participant = participant,
+                training = training,
+                communityName = communityName,
+            )
+            WhatsAppMessageType.RECORDING_AND_MATERIAL -> buildRecordingAndMaterialMessage(
+                participant = participant,
+                training = training,
+                communityName = communityName,
+            )
+        }
+    }
+
+    private fun buildZoomAndScheduleMessage(
         participant: Participant,
         training: Training,
         communityName: String,
@@ -49,14 +70,26 @@ class BuildWhatsAppMessageUseCase @Inject constructor() {
             builder.append("Lokasi: ${training.location}\n")
         }
 
-        if (!training.recordingUrl.isNullOrBlank()) {
-            builder.append("Link Rekaman: ${training.recordingUrl}\n")
-        }
-        if (!training.materialUrl.isNullOrBlank()) {
-            builder.append("Link Materi: ${training.materialUrl}\n")
-        }
-
         builder.append("\nSalam,\n")
+        builder.append(communityName.ifBlank { "E-Pelatihan" })
+
+        return builder.toString()
+    }
+
+    private fun buildRecordingAndMaterialMessage(
+        participant: Participant,
+        training: Training,
+        communityName: String,
+    ): String {
+        val recUrl = training.recordingUrl?.takeIf { it.isNotBlank() } ?: "-"
+        val matUrl = training.materialUrl?.takeIf { it.isNotBlank() } ?: "-"
+
+        val builder = StringBuilder()
+        builder.append("Halo ${participant.name},\n\n")
+        builder.append("Berikut link rekaman dan Materi Pelatihan ${training.name}\n")
+        builder.append("Link Rekaman : $recUrl\n")
+        builder.append("Link Materi : $matUrl\n\n")
+        builder.append("Salam,\n")
         builder.append(communityName.ifBlank { "E-Pelatihan" })
 
         return builder.toString()

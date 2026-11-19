@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material.icons.filled.EditNote
@@ -189,6 +190,16 @@ private fun HomeScreen(
                 icon = Icons.Default.CalendarMonth,
                 backgroundColor = Color(0xFFF3E8FF),
                 iconTint = Color(0xFF7E22CE),
+                onClick = onNavigateToReport,
+            ),
+        )
+        add(
+            HomeMenuItem(
+                id = "chart",
+                title = "Grafik Tren",
+                icon = Icons.Default.BarChart,
+                backgroundColor = Color(0xFFEDE9FE),
+                iconTint = Color(0xFF6D28D9),
                 onClick = onNavigateToReport,
             ),
         )

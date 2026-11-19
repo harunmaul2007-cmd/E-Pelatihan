@@ -76,6 +76,7 @@ import com.harunmaul.epelatihan.core.designsystem.theme.BrandSuccess
 import com.harunmaul.epelatihan.domain.model.MeetingMethod
 import com.harunmaul.epelatihan.domain.model.MonthlyReport
 import com.harunmaul.epelatihan.domain.model.TrainingReportRow
+import com.harunmaul.epelatihan.feature.report.component.TrainingParticipantBarChart
 import java.io.OutputStream
 import java.time.Month
 import java.time.YearMonth
@@ -433,6 +434,15 @@ private fun ReportContent(
         item {
             Spacer(modifier = Modifier.height(8.dp))
             MonthlySummaryCard(report = report)
+        }
+
+        if (report.trainings.isNotEmpty()) {
+            item {
+                TrainingParticipantBarChart(
+                    trainings = report.trainings,
+                    onTrainingClick = onTrainingClick,
+                )
+            }
         }
 
         item {

@@ -10,7 +10,13 @@ import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -427,50 +433,67 @@ private fun MonthSelectorHeader(
     val idLocale = Locale.forLanguageTag("id-ID")
     val monthName = selectedMonth.month.getDisplayName(TextStyle.FULL, idLocale)
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp,
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            IconButton(onClick = onPreviousMonth) {
+            IconButton(
+                onClick = onPreviousMonth,
+                modifier = Modifier.size(40.dp),
+            ) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "Bulan sebelumnya",
+                    tint = Color(0xFF0F172A),
                 )
             }
 
-            Row(
+            Surface(
                 modifier = Modifier
-                    .clickable(onClick = onMonthTextClick)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable(onClick = onMonthTextClick),
+                color = Color(0xFFEFF6FF),
             ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "$monthName ${selectedMonth.year}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF1D4ED8),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "$monthName ${selectedMonth.year}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1D4ED8),
+                    )
+                }
             }
 
-            IconButton(onClick = onNextMonth) {
+            IconButton(
+                onClick = onNextMonth,
+                modifier = Modifier.size(40.dp),
+            ) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Bulan berikutnya",
+                    tint = Color(0xFF0F172A),
                 )
             }
         }
@@ -488,10 +511,10 @@ private fun ReportContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             MonthlySummaryCard(report = report)
         }
 
@@ -510,34 +533,64 @@ private fun ReportContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onExportPdf,
-                    shape = RoundedCornerShape(12.dp),
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(onClick = onExportPdf),
+                    color = Color(0xFFFEE2E2),
+                    border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                    shape = RoundedCornerShape(14.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PictureAsPdf,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.export_pdf_button))
+                    Row(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PictureAsPdf,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = Color(0xFFDC2626),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.export_pdf_button),
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFDC2626),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
 
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onExportXlsx,
-                    shape = RoundedCornerShape(12.dp),
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(onClick = onExportXlsx),
+                    color = Color(0xFFDCFCE7),
+                    border = BorderStroke(1.dp, Color(0xFFBBF7D0)),
+                    shape = RoundedCornerShape(14.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.TableChart,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = BrandSuccess,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.export_xlsx_button))
+                    Row(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.TableChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = Color(0xFF16A34A),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.export_xlsx_button),
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF16A34A),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }
@@ -552,12 +605,20 @@ private fun ReportContent(
                     text = stringResource(R.string.report_trainings_detail_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
                 )
-                Text(
-                    text = "${report.trainings.size} kegiatan",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFEFF6FF),
+                ) {
+                    Text(
+                        text = "${report.trainings.size} kegiatan",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1D4ED8),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
             }
         }
 
@@ -582,153 +643,176 @@ private fun ReportContent(
 
 @Composable
 private fun MonthlySummaryCard(report: MonthlyReport) {
-    Card(
+    Column(
         modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // 2x2 Grid Executive KPI Metrics
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            // KPI 1: Kegiatan Pelatihan
+            KpiCard(
+                modifier = Modifier.weight(1f),
+                title = "Total Pelatihan",
+                value = "${report.trainingCount}",
+                unit = "kegiatan",
+                icon = Icons.Default.Event,
+                iconBg = Color(0xFFF3E8FF),
+                iconTint = Color(0xFF7E22CE),
+            )
+
+            // KPI 2: Total Peserta
+            KpiCard(
+                modifier = Modifier.weight(1f),
+                title = "Total Peserta",
+                value = "${report.registrationCount}",
+                unit = "orang",
+                subtitle = "${report.paidCount} Lunas • ${report.unpaidCount} Belum",
+                icon = Icons.Default.Group,
+                iconBg = Color(0xFFE0F7FA),
+                iconTint = Color(0xFF00838F),
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            // KPI 3: Total Pemasukan
+            KpiCard(
+                modifier = Modifier.weight(1f),
+                title = "Pemasukan",
+                value = report.totalIncome.toRupiahString(),
+                unit = "",
+                icon = Icons.Default.Payments,
+                iconBg = Color(0xFFDCFCE7),
+                iconTint = Color(0xFF16A34A),
+                valueColor = Color(0xFF15803D),
+            )
+
+            // KPI 4: Sisa Tagihan
+            val hasOutstanding = report.outstanding > 0
+            KpiCard(
+                modifier = Modifier.weight(1f),
+                title = "Sisa Tagihan",
+                value = report.outstanding.toRupiahString(),
+                unit = "",
+                icon = Icons.Default.Payments,
+                iconBg = if (hasOutstanding) Color(0xFFFEF3C7) else Color(0xFFF1F5F9),
+                iconTint = if (hasOutstanding) Color(0xFFD97706) else Color(0xFF64748B),
+                valueColor = if (hasOutstanding) Color(0xFFB45309) else Color(0xFF64748B),
+            )
+        }
+
+        // Additional Detail Card (Total Tagihan & Skema Harga)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Total Tagihan: ${report.totalBilled.toRupiahString()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF475569),
+                )
+                Text(
+                    text = "Early: ${report.earlyBirdCount} • Normal: ${report.normalCount}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF64748B),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KpiCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    unit: String = "",
+    subtitle: String? = null,
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    valueColor: Color = Color(0xFF0F172A),
+) {
+    Card(
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(14.dp),
         ) {
-            Text(
-                text = stringResource(R.string.report_summary_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            // Section Keuangan
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricRow(
-                    label = stringResource(R.string.metric_total_billed),
-                    value = report.totalBilled.toRupiahString(),
-                    isBold = true,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF64748B),
+                    fontWeight = FontWeight.Medium,
                 )
-                MetricRow(
-                    label = stringResource(R.string.metric_total_income),
-                    value = report.totalIncome.toRupiahString(),
-                    valueColor = BrandSuccess,
-                    isBold = true,
-                )
-                MetricRow(
-                    label = stringResource(R.string.metric_outstanding),
-                    value = report.outstanding.toRupiahString(),
-                    valueColor = if (report.outstanding > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    isBold = true,
-                )
-            }
-
-            HorizontalDivider()
-
-            // Section Jumlah Peserta
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(iconBg, CircleShape),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    CountPill(
-                        label = stringResource(R.string.metric_training_count),
-                        count = report.trainingCount.toString(),
-                        icon = Icons.Default.Event,
-                    )
-                    CountPill(
-                        label = stringResource(R.string.metric_total_registrations),
-                        count = report.registrationCount.toString(),
-                        icon = Icons.Default.Group,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    CountPill(
-                        label = stringResource(R.string.metric_paid_count),
-                        count = report.paidCount.toString(),
-                        icon = Icons.Default.Payments,
-                    )
-                    CountPill(
-                        label = stringResource(R.string.metric_unpaid_count),
-                        count = report.unpaidCount.toString(),
-                        icon = Icons.Default.Payments,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    CountPill(
-                        label = stringResource(R.string.metric_early_bird_count),
-                        count = report.earlyBirdCount.toString(),
-                    )
-                    CountPill(
-                        label = stringResource(R.string.metric_normal_count),
-                        count = report.normalCount.toString(),
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = iconTint,
                     )
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun MetricRow(
-    label: String,
-    value: String,
-    valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
-    isBold: Boolean = false,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-            color = valueColor,
-        )
-    }
-}
+            Spacer(modifier = Modifier.height(8.dp))
 
-@Composable
-private fun CountPill(
-    label: String,
-    count: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = valueColor,
+                )
+                if (unit.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = unit,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.padding(bottom = 1.dp),
+                    )
+                }
+            }
+
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF64748B),
+                )
+            }
         }
-        Text(
-            text = "$label:",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = count,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-        )
     }
 }
 
@@ -737,18 +821,19 @@ private fun TrainingReportCard(
     row: TrainingReportRow,
     onClick: () -> Unit,
 ) {
+    val isOnline = row.training.meetingMethod == MeetingMethod.ONLINE
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
@@ -760,7 +845,8 @@ private fun TrainingReportCard(
                     Text(
                         text = row.training.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -770,89 +856,97 @@ private fun TrainingReportCard(
                             row.training.timeZoneId,
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFF64748B),
                     )
                 }
 
-                val methodLabel = if (row.training.meetingMethod == MeetingMethod.ONLINE) {
-                    stringResource(R.string.method_online)
-                } else {
-                    stringResource(R.string.method_offline)
-                }
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = if (isOnline) Color(0xFFDCFCE7) else Color(0xFFFEF3C7),
                 ) {
                     Text(
-                        text = methodLabel,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        text = if (isOnline) stringResource(R.string.method_online) else stringResource(R.string.method_offline),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOnline) Color(0xFF15803D) else Color(0xFFB45309),
                     )
                 }
             }
 
-            HorizontalDivider()
-
+            // Peserta Pills
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = "Pendaftar: ${row.registrationCount} (${row.paidCount} Lunas, ${row.unpaidCount} Belum)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "Early: ${row.earlyBirdCount} | Normal: ${row.normalCount}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFF8FAFC),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = "${row.registrationCount} Pendaftar (${row.paidCount} Lunas, ${row.unpaidCount} Belum)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF334155),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
             }
 
-            Row(
+            // Financial Summary Row
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFFF8FAFC),
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column {
-                    Text(
-                        text = "Total Tagihan",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = row.totalBilled.toRupiahString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text(
+                            text = "Tagihan",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF64748B),
+                        )
+                        Text(
+                            text = row.totalBilled.toRupiahString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF334155),
+                        )
+                    }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Pemasukan",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = row.totalIncome.toRupiahString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BrandSuccess,
-                    )
-                }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Pemasukan",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF64748B),
+                        )
+                        Text(
+                            text = row.totalIncome.toRupiahString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF15803D),
+                        )
+                    }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Sisa Tagihan",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = row.outstanding.toRupiahString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (row.outstanding > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Sisa",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF64748B),
+                        )
+                        Text(
+                            text = row.outstanding.toRupiahString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (row.outstanding > 0) Color(0xFFDC2626) else Color(0xFF15803D),
+                        )
+                    }
                 }
             }
         }

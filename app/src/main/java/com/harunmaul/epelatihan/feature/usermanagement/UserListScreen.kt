@@ -1,5 +1,8 @@
 package com.harunmaul.epelatihan.feature.usermanagement
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -28,17 +32,20 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,6 +53,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,10 +62,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harunmaul.epelatihan.R
@@ -129,9 +141,33 @@ fun UserListScreen(
     onCancelResend: () -> Unit,
 ) {
     Scaffold(
+        containerColor = Color(0xFFF8FAFC),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.user_management_title)) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.user_management_title),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        if (uiState.users.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            ) {
+                                Text(
+                                    text = "${uiState.users.size}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                )
+                            }
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -140,19 +176,26 @@ fun UserListScreen(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                ),
             )
         },
         floatingActionButton = {
             if (uiState.isCurrentAdmin) {
-                FloatingActionButton(
+                ExtendedFloatingActionButton(
                     onClick = onOpenInviteDialog,
+                    icon = { Icon(Icons.Default.PersonAdd, contentDescription = null) },
+                    text = {
+                        Text(
+                            text = stringResource(R.string.invite_user_button),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
                     containerColor = MaterialTheme.colorScheme.primary,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PersonAdd,
-                        contentDescription = stringResource(R.string.invite_user_button),
-                    )
-                }
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp),
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -166,40 +209,43 @@ fun UserListScreen(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                    ),
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(Color(0xFFFEE2E2), CircleShape),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(48.dp),
+                            tint = Color(0xFFDC2626),
+                            modifier = Modifier.size(40.dp),
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Akses Ditolak",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Hanya Administrator aktif yang memiliki hak untuk mengelola pengguna lembaga.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = onNavigateBack) {
-                            Text(stringResource(R.string.back))
-                        }
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Akses Ditolak",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Hanya Administrator aktif yang memiliki hak untuk mengelola pengguna lembaga.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF64748B),
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = onNavigateBack,
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text(stringResource(R.string.back))
                     }
                 }
             }
@@ -211,59 +257,131 @@ fun UserListScreen(
                 .fillMaxSize()
                 .padding(contentPadding),
         ) {
-            // Search field
-            OutlinedTextField(
-                value = uiState.searchQuery,
-                onValueChange = onSearchQueryChanged,
+            // Search Bar & Filter Chips
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.search_users_placeholder)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchQueryChanged("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = null)
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-            )
-
-            // Filter Chips
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item {
-                    FilterChip(
-                        selected = uiState.filter == UserFilter.ALL,
-                        onClick = { onFilterSelected(UserFilter.ALL) },
-                        label = { Text(stringResource(R.string.filter_all)) },
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = uiState.filter == UserFilter.ADMIN,
-                        onClick = { onFilterSelected(UserFilter.ADMIN) },
-                        label = { Text(stringResource(R.string.filter_admin)) },
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = uiState.filter == UserFilter.USER,
-                        onClick = { onFilterSelected(UserFilter.USER) },
-                        label = { Text(stringResource(R.string.filter_user)) },
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = uiState.filter == UserFilter.INACTIVE,
-                        onClick = { onFilterSelected(UserFilter.INACTIVE) },
-                        label = { Text(stringResource(R.string.filter_inactive)) },
-                    )
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = onSearchQueryChanged,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.search_users_placeholder),
+                            color = Color(0xFF94A3B8),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                    trailingIcon = {
+                        if (uiState.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { onSearchQueryChanged("") }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Hapus pencarian",
+                                    tint = Color(0xFF94A3B8),
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color(0xFFE2E8F0),
+                        focusedContainerColor = Color(0xFFF8FAFC),
+                        unfocusedContainerColor = Color(0xFFF8FAFC),
+                    ),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Filter Chips
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        FilterChip(
+                            selected = uiState.filter == UserFilter.ALL,
+                            onClick = { onFilterSelected(UserFilter.ALL) },
+                            label = { Text(stringResource(R.string.filter_all)) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                selectedLabelColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = uiState.filter == UserFilter.ALL,
+                                borderColor = Color(0xFFE2E8F0),
+                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = uiState.filter == UserFilter.ADMIN,
+                            onClick = { onFilterSelected(UserFilter.ADMIN) },
+                            label = { Text(stringResource(R.string.filter_admin)) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFF3E8FF),
+                                selectedLabelColor = Color(0xFF7E22CE),
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = uiState.filter == UserFilter.ADMIN,
+                                borderColor = Color(0xFFE2E8F0),
+                                selectedBorderColor = Color(0xFF7E22CE),
+                            ),
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = uiState.filter == UserFilter.USER,
+                            onClick = { onFilterSelected(UserFilter.USER) },
+                            label = { Text(stringResource(R.string.filter_user)) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFEFF6FF),
+                                selectedLabelColor = Color(0xFF1D4ED8),
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = uiState.filter == UserFilter.USER,
+                                borderColor = Color(0xFFE2E8F0),
+                                selectedBorderColor = Color(0xFF1D4ED8),
+                            ),
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = uiState.filter == UserFilter.INACTIVE,
+                            onClick = { onFilterSelected(UserFilter.INACTIVE) },
+                            label = { Text(stringResource(R.string.filter_inactive)) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFFEE2E2),
+                                selectedLabelColor = Color(0xFFB91C1C),
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = uiState.filter == UserFilter.INACTIVE,
+                                borderColor = Color(0xFFE2E8F0),
+                                selectedBorderColor = Color(0xFFB91C1C),
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -277,16 +395,36 @@ fun UserListScreen(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(R.string.empty_users_message),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .background(Color(0xFFEFF6FF), CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = Color(0xFF2563EB),
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.empty_users_message),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A),
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(
@@ -320,7 +458,8 @@ fun UserListScreen(
         val newRole = if (targetUser.role == UserRole.ADMIN) UserRole.USER else UserRole.ADMIN
         AlertDialog(
             onDismissRequest = onCancelRoleChange,
-            title = { Text(stringResource(R.string.change_role_title)) },
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(stringResource(R.string.change_role_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     stringResource(
@@ -328,10 +467,14 @@ fun UserListScreen(
                         targetUser.displayName,
                         newRole.name,
                     ),
+                    color = Color(0xFF475569),
                 )
             },
             confirmButton = {
-                Button(onClick = onConfirmRoleChange) {
+                Button(
+                    onClick = onConfirmRoleChange,
+                    shape = RoundedCornerShape(10.dp),
+                ) {
                     Text(stringResource(R.string.confirm_change_role))
                 }
             },
@@ -348,11 +491,13 @@ fun UserListScreen(
         val willDeactivate = targetUser.active
         AlertDialog(
             onDismissRequest = onCancelStatusChange,
+            shape = RoundedCornerShape(20.dp),
             title = {
                 Text(
                     stringResource(
                         if (willDeactivate) R.string.deactivate_user_title else R.string.activate_user_title,
                     ),
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
@@ -362,17 +507,19 @@ fun UserListScreen(
                     } else {
                         stringResource(R.string.activate_user_message, targetUser.displayName)
                     },
+                    color = Color(0xFF475569),
                 )
             },
             confirmButton = {
                 Button(
                     onClick = onConfirmStatusChange,
+                    shape = RoundedCornerShape(10.dp),
                     colors = if (willDeactivate) {
-                        androidx.compose.material3.ButtonDefaults.buttonColors(
+                        ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error,
                         )
                     } else {
-                        androidx.compose.material3.ButtonDefaults.buttonColors()
+                        ButtonDefaults.buttonColors()
                     },
                 ) {
                     Text(
@@ -394,14 +541,19 @@ fun UserListScreen(
     uiState.selectedUserForResend?.let { targetUser ->
         AlertDialog(
             onDismissRequest = onCancelResend,
-            title = { Text(stringResource(R.string.resend_invitation_title)) },
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(stringResource(R.string.resend_invitation_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     stringResource(R.string.resend_invitation_message, targetUser.email),
+                    color = Color(0xFF475569),
                 )
             },
             confirmButton = {
-                Button(onClick = onConfirmResend) {
+                Button(
+                    onClick = onConfirmResend,
+                    shape = RoundedCornerShape(10.dp),
+                ) {
                     Text(stringResource(R.string.confirm_resend))
                 }
             },
@@ -423,17 +575,14 @@ private fun UserCard(
     onRequestResend: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val isAdmin = user.role == UserRole.ADMIN
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (user.active) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
-            },
-        ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
     ) {
         Row(
             modifier = Modifier
@@ -441,34 +590,25 @@ private fun UserCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = if (user.role == UserRole.ADMIN) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.secondaryContainer
-                },
-                modifier = Modifier.size(44.dp),
+            // Circular Avatar Badge
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .background(
+                        color = if (isAdmin) Color(0xFFF3E8FF) else Color(0xFFEFF6FF),
+                        shape = CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = if (user.role == UserRole.ADMIN) {
-                            Icons.Default.AdminPanelSettings
-                        } else {
-                            Icons.Default.Person
-                        },
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = if (user.role == UserRole.ADMIN) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.secondary
-                        },
-                    )
-                }
+                Icon(
+                    imageVector = if (isAdmin) Icons.Default.AdminPanelSettings else Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = if (isAdmin) Color(0xFF7E22CE) else Color(0xFF2563EB),
+                )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -476,27 +616,45 @@ private fun UserCard(
                         text = user.displayName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     if (isSelf) {
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "(Anda)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFEFF6FF),
+                        ) {
+                            Text(
+                                text = "Anda",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF2563EB),
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
                     }
                 }
 
-                Text(
-                    text = user.email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = null,
+                        modifier = Modifier.size(13.dp),
+                        tint = Color(0xFF94A3B8),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = user.email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF64748B),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
@@ -507,25 +665,21 @@ private fun UserCard(
                     // Role Badge
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        color = if (isAdmin) Color(0xFFF3E8FF) else Color(0xFFEFF6FF),
                     ) {
                         Text(
                             text = user.role.name,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            color = if (isAdmin) Color(0xFF7E22CE) else Color(0xFF2563EB),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                         )
                     }
 
                     // Status Badge
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = if (user.active) {
-                            BrandSuccess.copy(alpha = 0.12f)
-                        } else {
-                            MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-                        },
+                        color = if (user.active) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
                     ) {
                         Text(
                             text = if (user.active) {
@@ -535,8 +689,8 @@ private fun UserCard(
                             },
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (user.active) BrandSuccess else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            color = if (user.active) Color(0xFF15803D) else Color(0xFFB91C1C),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                         )
                     }
 
@@ -544,14 +698,14 @@ private fun UserCard(
                     if (user.invitationStatus == InvitationStatus.INVITED) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+                            color = Color(0xFFFEF3C7),
                         ) {
                             Text(
                                 text = stringResource(R.string.status_invited),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                color = Color(0xFFB45309),
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                             )
                         }
                     }
@@ -564,6 +718,7 @@ private fun UserCard(
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "Menu Aksi",
+                        tint = Color(0xFF64748B),
                     )
                 }
 

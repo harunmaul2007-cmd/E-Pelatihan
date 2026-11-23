@@ -1,7 +1,9 @@
 package com.harunmaul.epelatihan.feature.report
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +20,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,31 +55,57 @@ fun ExportOptionsDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = Color.White,
         title = {
-            Column {
-                Text(
-                    text = stringResource(R.string.export_options_dialog_title, formatName),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                if (periodText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Periode: $periodText",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            color = if (isPdf) Color(0xFFFEE2E2) else Color(0xFFDCFCE7),
+                            shape = CircleShape,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (isPdf) Icons.Default.PictureAsPdf else Icons.Default.TableChart,
+                        contentDescription = null,
+                        tint = if (isPdf) Color(0xFFDC2626) else Color(0xFF16A34A),
+                        modifier = Modifier.size(24.dp),
                     )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.export_options_dialog_title, formatName),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
+                    )
+                    if (periodText.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Periode: $periodText",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF64748B),
+                        )
+                    }
                 }
             }
         },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 // 1. WhatsApp
                 ExportOptionCard(
                     icon = Icons.AutoMirrored.Filled.Send,
-                    iconTint = BrandWhatsApp,
+                    iconTint = Color(0xFF16A34A),
                     iconBg = Color(0xFFDCFCE7),
                     title = stringResource(R.string.export_options_send_wa_title),
                     description = stringResource(R.string.export_options_send_wa_desc),
@@ -84,8 +114,6 @@ fun ExportOptionsDialog(
                         onSendViaWhatsApp()
                     },
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 // 2. Email
                 ExportOptionCard(
@@ -100,8 +128,6 @@ fun ExportOptionsDialog(
                     },
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
                 // 3. Share Chooser
                 ExportOptionCard(
                     icon = Icons.Default.Share,
@@ -115,13 +141,11 @@ fun ExportOptionsDialog(
                     },
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
                 // 4. Save to device
                 ExportOptionCard(
                     icon = Icons.Default.Download,
-                    iconTint = Color(0xFF475467),
-                    iconBg = Color(0xFFF2F4F7),
+                    iconTint = Color(0xFF475569),
+                    iconBg = Color(0xFFF1F5F9),
                     title = stringResource(R.string.export_options_save_title),
                     description = stringResource(R.string.export_options_save_desc),
                     onClick = {
@@ -134,7 +158,11 @@ fun ExportOptionsDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(stringResource(R.string.cancel))
+                Text(
+                    text = stringResource(R.string.cancel),
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF64748B),
+                )
             }
         },
     )
@@ -152,20 +180,21 @@ private fun ExportOptionCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFF8FAFC),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .background(iconBg, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
@@ -177,27 +206,28 @@ private fun ExportOptionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color(0xFF64748B),
                 )
             }
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(14.dp),
+                tint = Color(0xFF94A3B8),
             )
         }
     }
